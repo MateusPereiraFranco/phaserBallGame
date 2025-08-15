@@ -22,9 +22,8 @@ export default class GameScene extends Phaser.Scene {
         const levelDataKey = `level${this.currentLevel}Data`;
         const levelData = this.cache.json.get(levelDataKey);
 
-        // --- INICIA A CENA DE UI EM PARALELO ---
         this.scene.launch('UIScene');
-        this.updateUI(); // Emite os valores iniciais para a UI
+        this.updateUI();
 
         // --- CRIAÇÃO DOS OBJETOS DA FASE ---
         this.platforms = this.physics.add.staticGroup();
@@ -84,7 +83,7 @@ export default class GameScene extends Phaser.Scene {
             } else if (this.extraJumps > 0) {
                 this.player.setVelocityY(-300);
                 this.extraJumps--;
-                this.updateUI(); // Emite evento para atualizar a UI
+                this.updateUI();
             }
         }
 
@@ -112,7 +111,7 @@ export default class GameScene extends Phaser.Scene {
         if (this.isGamePaused) return;
         this.isGamePaused = true;
         this.lives--;
-        this.updateUI(); // Emite evento para a UI antes de reiniciar
+        this.updateUI();
 
         if (this.lives > 0) {
             this.cameras.main.fade(250, 0, 0, 0, false, (camera, progress) => {
@@ -126,7 +125,7 @@ export default class GameScene extends Phaser.Scene {
     collectDoubleJumpItem(player, item) {
         item.disableBody(true, true);
         this.extraJumps++;
-        this.updateUI(); // Emite evento para atualizar a UI
+        this.updateUI();
         this.cameras.main.flash(200, 255, 255, 0);
     }
 
