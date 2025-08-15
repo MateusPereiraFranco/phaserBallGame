@@ -1,183 +1,145 @@
+import Player from '../prefabs/Player.js'; // Importa a classe Player
+
 export default class GameScene extends Phaser.Scene {
     constructor() {
         super('GameScene');
         this.player = null;
         this.cursors = null;
-        this.jumps = 0;
-        this.extraJumps = 0; // **MUDANÇA**: Contador para pulos extras
+        this.extraJumps = 0;
         this.currentLevel = 1;
         this.lives = 3;
-        this.livesText = null;
-        this.isGamePaused = false; // Flag para controlar o estado do jogo
+        this.isGamePaused = false;
     }
 
     init(data) {
-        // Recebe o NÚMERO do nível, VIDAS e PULOS EXTRAS
         this.currentLevel = data.level || 1;
         this.lives = data.lives !== undefined ? data.lives : 3;
         this.extraJumps = data.extraJumps || 0;
     }
 
     create() {
-        this.isGamePaused = true; // Pausa o jogo no início da fase
+        this.isGamePaused = true;
         const levelDataKey = `level${this.currentLevel}Data`;
         const levelData = this.cache.json.get(levelDataKey);
 
-        // --- CRIAÇÃO DAS PLATAFORMAS DINAMICAMENTE ---
+        // --- INICIA A CENA DE UI EM PARALELO ---
+        this.scene.launch('UIScene');
+        this.updateUI(); // Emite os valores iniciais para a UI
+
+        // --- CRIAÇÃO DOS OBJETOS DA FASE ---
         this.platforms = this.physics.add.staticGroup();
-        levelData.platforms.forEach(p => {
-            this.platforms.create(p.x, p.y, 'platform').setScale(p.scaleX, p.scaleY).refreshBody();
-        });
+        levelData.platforms.forEach(p => this.platforms.create(p.x, p.y, 'platform').setScale(p.scaleX, p.scaleY).refreshBody());
 
-        // --- CRIAÇÃO DOS ESPINHOS DINAMICAMENTE ---
+        this.walls = this.physics.add.staticGroup();
+        if (levelData.walls) {
+            levelData.walls.forEach(w => this.walls.create(w.x, w.y, 'wall').setScale(w.scaleX, w.scaleY).refreshBody());
+        }
+
         this.spikes = this.physics.add.staticGroup();
-        levelData.spikes.forEach(s => {
-            this.spikes.create(s.x, s.y, 'spike').setScale(s.scale).refreshBody();
-        });
+        levelData.spikes.forEach(s => this.spikes.create(s.x, s.y, 'spike').setScale(s.scale).refreshBody());
 
-        // --- CRIAÇÃO DO JOGADOR ---
-        this.player = this.physics.add.sprite(levelData.playerStart.x, levelData.playerStart.y, 'ball');
-        this.player.setBounce(0.1);
-        this.player.body.setAllowGravity(false); // Desativa a gravidade inicialmente
-        
-        // --- CRIAÇÃO DOS ITENS DE PULO DUPLO (AGORA COMO UM GRUPO) ---
-        this.doubleJumpItemsGroup = this.physics.add.group({
-            allowGravity: false 
-        });
+        // --- CRIAÇÃO DO JOGADOR USANDO A CLASSE ---
+        this.player = new Player(this, levelData.playerStart.x, levelData.playerStart.y);
+
+        // --- CRIAÇÃO DOS ITENS ---
+        this.doubleJumpItemsGroup = this.physics.add.group({ allowGravity: false });
         if (levelData.doubleJumpItems) {
-            levelData.doubleJumpItems.forEach(itemData => {
-                const item = this.doubleJumpItemsGroup.create(itemData.x, itemData.y, 'doubleJump');
-                item.setScale(itemData.scale);
-                item.setCollideWorldBounds(true);
-            });
+            levelData.doubleJumpItems.forEach(itemData => this.doubleJumpItemsGroup.create(itemData.x, itemData.y, 'doubleJump').setScale(itemData.scale));
         }
-        this.physics.add.overlap(this.player, this.doubleJumpItemsGroup, this.collectDoubleJumpItem, null, this);
 
+        this.colorChangeItemsGroup = this.physics.add.group({ allowGravity: false });
+        if (levelData.colorChangeItems) {
+            levelData.colorChangeItems.forEach(itemData => this.colorChangeItemsGroup.create(itemData.x, itemData.y, 'colorChange').setScale(itemData.scale));
+        }
 
-        // --- CRIAÇÃO DO ITEM DE FIM DE FASE ---
         if (levelData.goal) {
-            const goalData = levelData.goal;
-            this.goalItem = this.physics.add.sprite(goalData.x, goalData.y, 'goal').setScale(goalData.scale);
-            this.goalItem.setCollideWorldBounds(true);
-            this.physics.add.collider(this.goalItem, this.platforms);
-            this.physics.add.overlap(this.player, this.goalItem, this.goToNextLevel, null, this);
+            this.goalItem = this.physics.add.sprite(levelData.goal.x, levelData.goal.y, 'goal').setScale(levelData.goal.scale);
+            this.physics.world.enable(this.goalItem);
+            this.goalItem.body.setAllowGravity(false);
         }
 
-        // --- CONFIGURAÇÃO DAS COLISÕES ---
+        // --- CONFIGURAÇÃO DAS COLISÕES E OVERLAPS ---
         this.physics.add.collider(this.player, this.platforms);
+        this.physics.add.collider(this.player, this.walls);
         this.physics.add.collider(this.player, this.spikes, this.loseLife, null, this);
+        this.physics.add.overlap(this.player, this.doubleJumpItemsGroup, this.collectDoubleJumpItem, null, this);
+        this.physics.add.overlap(this.player, this.colorChangeItemsGroup, this.collectColorChangeItem, null, this);
+        if (this.goalItem) this.physics.add.overlap(this.player, this.goalItem, this.goToNextLevel, null, this);
 
-        // --- CONTROLES E ESTADO INICIAL ---
+        // --- CONTROLES ---
         this.cursors = this.input.keyboard.createCursorKeys();
-        this.jumps = 0;
 
-        // --- CRIAÇÃO DO TEXTO DE VIDAS ---
-        this.livesText = this.add.text(16, 16, `Vidas: ${this.lives}`, { fontSize: '24px', fill: '#FFFFFF' });
-        this.livesText.setScrollFactor(0); 
-
-        // --- MOSTRAR NOME DA FASE NO INÍCIO ---
         this.showLevelTitle();
     }
 
     update() {
-        // Não faz nada se o jogador não existir ou se o jogo estiver pausado
-        if (!this.player || !this.player.body || this.isGamePaused) return;
+        if (!this.player || this.isGamePaused) return;
 
-        // Lógica de movimento
-        if (this.cursors.left.isDown) {
-            this.player.setVelocityX(-200);
-        } else if (this.cursors.right.isDown) {
-            this.player.setVelocityX(200);
-        } else {
-            this.player.setVelocityX(0);
-        }
+        this.player.update(this.cursors);
 
-        // Morte por queda
-        if (this.player.y > 600) {
-            this.loseLife();
-        }
-
-        // Lógica de pulo
-        const isTouchingDown = this.player.body.touching.down;
         const upJustPressed = Phaser.Input.Keyboard.JustDown(this.cursors.up);
-
-        if (isTouchingDown) {
-            this.jumps = 0;
-        }
-
         if (upJustPressed) {
-            // Pulo 1: Se estiver no chão, pula normalmente
-            if (isTouchingDown) {
+            if (this.player.body.touching.down) {
                 this.player.setVelocityY(-330);
-                this.jumps = 1;
-            } 
-            // **MUDANÇA**: Pulos extras: se estiver no ar e o número de pulos feitos for menor que o total permitido (1 + extras)
-            else if (this.jumps > 0 && this.jumps < (1 + this.extraJumps)) {
+            } else if (this.extraJumps > 0) {
                 this.player.setVelocityY(-300);
-                this.jumps++; // Incrementa o contador de pulos feitos
+                this.extraJumps--;
+                this.updateUI(); // Emite evento para atualizar a UI
             }
         }
-    }
-    
-    showLevelTitle() {
-        const levelText = this.add.text(
-            this.cameras.main.width / 2, 
-            this.cameras.main.height / 2, 
-            `Level ${this.currentLevel}`, 
-            { fontSize: '64px', fill: '#FFFFFF', align: 'center' }
-        ).setOrigin(0.5);
-        levelText.setScrollFactor(0);
 
+        if (this.player.y > 600) this.loseLife();
+    }
+
+    showLevelTitle() {
+        const levelText = this.add.text(this.cameras.main.width / 2, this.cameras.main.height / 2, `Level ${this.currentLevel}`, { fontSize: '64px', fill: '#FFFFFF' }).setOrigin(0.5).setScrollFactor(0);
         this.time.delayedCall(1500, () => {
-            this.tweens.add({
-                targets: levelText,
-                alpha: 0,
-                duration: 500,
-                ease: 'Power2',
-                onComplete: () => {
-                    levelText.destroy();
-                }
-            });
-            
+            this.tweens.add({ targets: levelText, alpha: 0, duration: 500, onComplete: () => levelText.destroy() });
             this.player.body.setAllowGravity(true);
             this.isGamePaused = false;
+        });
+    }
+
+    updateUI() {
+        this.events.emit('updateUI', {
+            lives: this.lives,
+            extraJumps: this.extraJumps
         });
     }
 
     // --- FUNÇÕES DE CALLBACK ---
     loseLife() {
         if (this.isGamePaused) return;
-        this.isGamePaused = true; 
-
+        this.isGamePaused = true;
         this.lives--;
-        
+        this.updateUI(); // Emite evento para a UI antes de reiniciar
+
         if (this.lives > 0) {
             this.cameras.main.fade(250, 0, 0, 0, false, (camera, progress) => {
-                if (progress === 1) {
-                    // **MUDANÇA**: Passa o contador de pulos extras ao reiniciar
-                    this.scene.restart({ level: this.currentLevel, lives: this.lives, extraJumps: this.extraJumps });
-                }
+                if (progress === 1) this.scene.restart({ level: this.currentLevel, lives: this.lives, extraJumps: this.extraJumps });
             });
         } else {
-            console.log('GAME OVER');
-            // No Game Over, os pulos extras são resetados
             this.scene.start('GameScene', { level: 1, lives: 3 });
         }
     }
 
     collectDoubleJumpItem(player, item) {
         item.disableBody(true, true);
-        // **MUDANÇA**: Incrementa o contador de pulos extras
         this.extraJumps++;
+        this.updateUI(); // Emite evento para atualizar a UI
         this.cameras.main.flash(200, 255, 255, 0);
+    }
+
+    collectColorChangeItem(player, item) {
+        item.disableBody(true, true);
+        this.player.changeColor();
+        this.cameras.main.flash(200, 255, 0, 255);
     }
 
     goToNextLevel(player, goal) {
         const nextLevel = this.currentLevel + 1;
         const nextLevelDataKey = `level${nextLevel}Data`;
-
         if (this.cache.json.has(nextLevelDataKey)) {
-            // **MUDANÇA**: Passa o contador de pulos extras para a próxima fase
             this.scene.start('GameScene', { level: nextLevel, lives: this.lives, extraJumps: this.extraJumps });
         } else {
             console.log('VOCÊ VENCEU!');

@@ -6,6 +6,9 @@
     { "x": 650, "y": 400, "scaleX": 25, "scaleY": 2 },
     { "x": 400, "y": 400, "scaleX": 20, "scaleY": 2 }
   ],
+  "walls": [
+    { "x": 570, "y": 400, "scaleX": 2, "scaleY": 300 }
+  ],
   "spikes": [
     { "x": 580, "y": 375, "scale": 2 },
     { "x": 596, "y": 375, "scale": 2 },

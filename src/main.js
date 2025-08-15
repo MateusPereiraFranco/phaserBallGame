@@ -1,5 +1,6 @@
 import PreloaderScene from './scenes/PreloaderScene.js';
 import GameScene from './scenes/GameScene.js';
+import UIScene from './scenes/UIScene.js';
 
 const config = {
     type: Phaser.AUTO,
@@ -12,8 +13,7 @@ const config = {
             debug: false
         }
     },
-    // Define a ordem em que as cenas serão carregadas/executadas
-    scene: [PreloaderScene, GameScene]
+    scene: [PreloaderScene, GameScene, UIScene]
 };
 
 // Inicia o jogo
