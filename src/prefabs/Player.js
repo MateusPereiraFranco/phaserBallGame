@@ -9,15 +9,18 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         // --- AJUSTES FÍSICOS E VISUAIS ---
         this.setScale(0.10);
 
-        // **CORREÇÃO**: Ajusta a caixa de colisão para ser menor e mais centralizada no personagem,
         // ignorando o espaço transparente excessivo da imagem.
         // Estes valores foram ajustados para melhor corresponder à arte do personagem.
         this.body.setSize(this.width * 0.4, this.height * 0.8);
         this.body.setOffset(this.width * 0.3, this.height * 0.15);
 
-
         this.setBounce(0.1);
         this.body.setAllowGravity(false);
+
+        this.isDead = false;
+        this.isShooting = false;
+
+        this.on('animationcomplete', this.handleAnimationComplete, this);
 
         // Inicia com a animação 'idle'
         this.play('idle');
@@ -31,30 +34,75 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         });
     }
 
-    update(cursors) {
-        if (!this.body) return;
+    shoot() {
+        if (this.isDead || this.isShooting) return;
 
-        // --- LÓGICA DE MOVIMENTO ---
+        this.isShooting = true;
+
+        // Toca a animação correta com base no movimento
+        if (this.body.velocity.x !== 0) {
+            this.play('runShoot', true);
+        } else {
+            //this.setVelocityX(0);
+            this.play('shoot', true);
+        }
+
+        // Emite um evento para a GameScene saber que é para criar a bola de fogo
+        this.emit('fire');
+    }
+
+    handleAnimationComplete(animation) {
+        // Se a animação de tiro (parado ou correndo) terminou, reseta o estado
+        if (animation.key === 'shoot' || animation.key === 'runShoot') {
+            this.isShooting = false;
+        }
+
+        // Se a animação de morte terminou, avisa a GameScene
+        if (animation.key === 'dead') {
+            this.emit('deathComplete');
+        }
+    }
+
+    die() {
+        if (this.isDead) return; // Previne que a função seja chamada múltiplas vezes
+
+        this.isDead = true;
+        this.setVelocity(0, 0); // Para o jogador completamente
+        this.play('dead', true); // Toca a animação de morte
+    }
+
+    update(cursors) {
+        if (this.isDead || !this.body) return;
+
+        // **CORREÇÃO**: A lógica de movimento agora SEMPRE é executada,
+        // permitindo que o jogador pare de se mover mesmo durante a animação de tiro.
         if (cursors.left.isDown) {
-            this.setVelocityX(-200);
-            this.setFlipX(true); // Vira o sprite para a esquerda
+            // Só permite mudar a velocidade se não estiver atirando parado
+            if (!(this.isShooting && this.body.velocity.x === 0)) {
+                this.setVelocityX(-200);
+                this.setFlipX(true);
+            }
         } else if (cursors.right.isDown) {
-            this.setVelocityX(200);
-            this.setFlipX(false); // Vira o sprite para a direita (padrão)
+            if (!(this.isShooting && this.body.velocity.x === 0)) {
+                this.setVelocityX(200);
+                this.setFlipX(false);
+            }
         } else {
             this.setVelocityX(0);
         }
 
-        // --- MÁQUINA DE ESTADOS DE ANIMAÇÃO ---
-        // Verifica o estado do jogador e toca a animação correta.
-        if (!this.body.touching.down) {
-            // Se não está tocando o chão, está pulando.
+        // **CORREÇÃO**: A máquina de estados de animação foi refinada.
+        if (this.isShooting) {
+            // Se o jogador para de se mover no meio da animação de tiro correndo,
+            // troca para a animação de tiro parado.
+            if (this.body.velocity.x === 0 && this.anims.currentAnim.key === 'runShoot') {
+                this.play('shoot', true);
+            }
+        } else if (!this.body.touching.down) {
             this.play('jump', true);
         } else if (this.body.velocity.x !== 0) {
-            // Se está no chão e se movendo, está correndo.
             this.play('run', true);
         } else {
-            // Se está no chão e parado, está ocioso.
             this.play('idle', true);
         }
     }

@@ -1,11 +1,14 @@
 import Player from '../prefabs/Player.js'; // Importa a classe Player
+import Fireball from '../prefabs/Fireball.js';
 
 export default class GameScene extends Phaser.Scene {
     constructor() {
         super('GameScene');
         this.player = null;
         this.cursors = null;
+        this.spacebar = null;
         this.extraJumps = 0;
+        this.ammo = 0;
         this.currentLevel = 1;
         this.lives = 3;
         this.isGamePaused = false;
@@ -15,6 +18,7 @@ export default class GameScene extends Phaser.Scene {
         this.currentLevel = data.level || 1;
         this.lives = data.lives !== undefined ? data.lives : 3;
         this.extraJumps = data.extraJumps || 0;
+        this.ammo = data.ammo || 0;
     }
 
     create() {
@@ -39,12 +43,25 @@ export default class GameScene extends Phaser.Scene {
 
         // --- CRIAÇÃO DO JOGADOR USANDO A CLASSE ---
         this.player = new Player(this, levelData.playerStart.x, levelData.playerStart.y);
+        this.player.on('deathComplete', this.handlePlayerDeath, this);
+        this.player.on('fire', this.fireFireball, this);
 
         // --- CRIAÇÃO DOS ITENS ---
         this.doubleJumpItemsGroup = this.physics.add.group({ allowGravity: false });
         if (levelData.doubleJumpItems) {
             levelData.doubleJumpItems.forEach(itemData => this.doubleJumpItemsGroup.create(itemData.x, itemData.y, 'doubleJump').setScale(itemData.scale));
         }
+
+        this.fireballItemsGroup = this.physics.add.group({ allowGravity: false });
+        if (levelData.fireballItems) {
+            levelData.fireballItems.forEach(itemData => this.fireballItemsGroup.create(itemData.x, itemData.y, 'fireballItem').setScale(itemData.scale));
+        }
+
+        this.fireballsGroup = this.physics.add.group({
+            classType: Fireball,
+            runChildUpdate: true,
+            allowGravity: false
+        });
 
         this.colorChangeItemsGroup = this.physics.add.group({ allowGravity: false });
         if (levelData.colorChangeItems) {
@@ -63,10 +80,14 @@ export default class GameScene extends Phaser.Scene {
         this.physics.add.collider(this.player, this.spikes, this.loseLife, null, this);
         this.physics.add.overlap(this.player, this.doubleJumpItemsGroup, this.collectDoubleJumpItem, null, this);
         this.physics.add.overlap(this.player, this.colorChangeItemsGroup, this.collectColorChangeItem, null, this);
+        this.physics.add.overlap(this.player, this.fireballItemsGroup, this.collectFireballItem, null, this);
         if (this.goalItem) this.physics.add.overlap(this.player, this.goalItem, this.goToNextLevel, null, this);
+        this.physics.add.collider(this.fireballsGroup, this.platforms, (fireball) => fireball.setActive(false).setVisible(false));
+        this.physics.add.collider(this.fireballsGroup, this.walls, (fireball) => fireball.setActive(false).setVisible(false));
 
         // --- CONTROLES ---
         this.cursors = this.input.keyboard.createCursorKeys();
+        this.spacebar = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
 
         this.showLevelTitle();
     }
@@ -87,6 +108,12 @@ export default class GameScene extends Phaser.Scene {
             }
         }
 
+        if (Phaser.Input.Keyboard.JustDown(this.spacebar)) {
+            if (this.ammo > 0) {
+                this.player.shoot();
+            }
+        }
+
         if (this.player.y > 600) this.loseLife();
     }
 
@@ -102,22 +129,41 @@ export default class GameScene extends Phaser.Scene {
     updateUI() {
         this.events.emit('updateUI', {
             lives: this.lives,
-            extraJumps: this.extraJumps
+            extraJumps: this.extraJumps,
+            ammo: this.ammo
         });
+    }
+
+    fireFireball() {
+        const fireball = this.fireballsGroup.get();
+        if (fireball) {
+            const direction = this.player.flipX ? 'left' : 'right';
+            // Ajusta a posição inicial da bola de fogo para sair da arma
+            const spawnX = this.player.flipX ? this.player.x - 20 : this.player.x + 20;
+            fireball.fire(spawnX, this.player.y, direction);
+
+            this.ammo--;
+            this.updateUI();
+        }
     }
 
     // --- FUNÇÕES DE CALLBACK ---
     loseLife() {
-        if (this.isGamePaused) return;
+        if (this.isGamePaused || this.player.isDead) return;
         this.isGamePaused = true;
+        this.player.die();
+    }
+
+    handlePlayerDeath() {
         this.lives--;
         this.updateUI();
 
         if (this.lives > 0) {
-            this.cameras.main.fade(250, 0, 0, 0, false, (camera, progress) => {
-                if (progress === 1) this.scene.restart({ level: this.currentLevel, lives: this.lives, extraJumps: this.extraJumps });
+            this.cameras.main.fade(500, 0, 0, 0, false, (camera, progress) => {
+                if (progress === 1) this.scene.restart({ level: this.currentLevel, lives: this.lives, extraJumps: 0, ammo: 0 });
             });
         } else {
+            console.log('GAME OVER');
             this.scene.start('GameScene', { level: 1, lives: 3 });
         }
     }
@@ -128,6 +174,14 @@ export default class GameScene extends Phaser.Scene {
         this.updateUI();
         this.cameras.main.flash(200, 255, 255, 0);
     }
+
+    collectFireballItem(player, item) {
+        item.disableBody(true, true);
+        this.ammo++;
+        this.updateUI();
+        this.cameras.main.flash(200, 255, 69, 0);
+    }
+
 
     collectColorChangeItem(player, item) {
         item.disableBody(true, true);

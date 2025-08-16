@@ -14,17 +14,28 @@ export default class PreloaderScene extends Phaser.Scene {
 
         // Carrega os 10 frames da animação 'idle' (parado)
         for (let i = 1; i <= 10; i++) {
-            this.load.image(`idle_${i}`, `assets/images/player/idle_${i}.png`);
+            this.load.image(`idle_${i}`, `assets/images/player/idle/idle_${i}.png`);
         }
 
         // Carrega os 8 frames da animação 'run' (correndo)
         for (let i = 1; i <= 8; i++) {
-            this.load.image(`run_${i}`, `assets/images/player/run_${i}.png`);
+            this.load.image(`run_${i}`, `assets/images/player/run/run_${i}.png`);
         }
 
         // **MUDANÇA**: Carrega os 10 frames da animação 'jump' (pulo)
         for (let i = 1; i <= 10; i++) {
-            this.load.image(`jump_${i}`, `assets/images/player/jump_${i}.png`);
+            this.load.image(`jump_${i}`, `assets/images/player/jump/jump_${i}.png`);
+        }
+
+        for (let i = 1; i <= 10; i++) {
+            this.load.image(`dead_${i}`, `assets/images/player/dead/dead_${i}.png`);
+        }
+
+        for (let i = 1; i <= 4; i++) this.load.image(`shoot_${i}`, `assets/images/player/shoot/shoot_${i}.png`);
+        for (let i = 1; i <= 9; i++) this.load.image(`runShoot_${i}`, `assets/images/player/runShoot/runShoot_${i}.png`);
+
+        for (let i = 1; i <= 5; i++) {
+            this.load.image(`bullet_${i}`, `assets/images/effects/fireball/bullet_${i}.png`);
         }
     }
 
@@ -36,6 +47,7 @@ export default class PreloaderScene extends Phaser.Scene {
         this.textures.generate('doubleJump', { data: ['010', '111', '010'], pixelWidth: 3, palette: { 0: '#0000', 1: '#ffd700' } });
         this.textures.generate('goal', { data: ['111', '101', '111'], pixelWidth: 3, palette: { 0: '#0000', 1: '#00ff00' } });
         this.textures.generate('colorChange', { data: ['1', '2'], pixelWidth: 2, palette: { 0: '#0000', 1: '#ff00ff', 2: '#a020f0' } });
+        this.textures.generate('fireballItem', { data: ['212', '111', '212'], pixelWidth: 3, palette: { 0: '#0000', 1: '#ff4500', 2: '#ff8c00' } });
 
         // --- CRIAÇÃO DAS ANIMAÇÕES GLOBAIS DO ROBÔ ---
 
@@ -61,7 +73,18 @@ export default class PreloaderScene extends Phaser.Scene {
             repeat: -1
         });
 
-        // **MUDANÇA**: Animação de pulo com 10 frames, sem repetir
+        const deadFrames = [];
+        for (let i = 1; i <= 10; i++) {
+            deadFrames.push({ key: `dead_${i}` });
+        }
+        this.anims.create({
+            key: 'dead',
+            frames: deadFrames,
+            frameRate: 10,
+            repeat: 0
+        });
+
+        // JUMPS ****************************************************************************************************************
         const jumpFrames = [];
         for (let i = 1; i <= 10; i++) {
             jumpFrames.push({ key: `jump_${i}` });
@@ -73,6 +96,24 @@ export default class PreloaderScene extends Phaser.Scene {
             repeat: 0 // Toca a animação apenas uma vez
         });
 
-        this.scene.start('GameScene', { level: 1 });
+        const shootFrames = []; for (let i = 1; i <= 4; i++) shootFrames.push({ key: `shoot_${i}` });
+        this.anims.create({ key: 'shoot', frames: shootFrames, frameRate: 20, repeat: 0 });
+
+        const runShootFrames = []; for (let i = 1; i <= 8; i++) runShootFrames.push({ key: `runShoot_${i}` });
+        this.anims.create({ key: 'runShoot', frames: runShootFrames, frameRate: 15, repeat: 0 });
+
+        // FIREBALLS **************************************************************************************************************
+        const fireballFrames = [];
+        for (let i = 1; i <= 5; i++) {
+            fireballFrames.push({ key: `bullet_${i}` });
+        }
+        this.anims.create({
+            key: 'fireball-anim',
+            frames: fireballFrames,
+            frameRate: 10,
+            repeat: -1
+        });
+
+        this.scene.start('GameScene', { level: 4 });
     }
 }
