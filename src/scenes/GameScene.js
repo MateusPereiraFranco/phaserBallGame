@@ -1,5 +1,6 @@
 import Player from '../prefabs/Player.js'; // Importa a classe Player
 import Fireball from '../prefabs/Fireball.js';
+import Spike from '../prefabs/Spike.js';
 
 export default class GameScene extends Phaser.Scene {
     constructor() {
@@ -38,8 +39,13 @@ export default class GameScene extends Phaser.Scene {
             levelData.walls.forEach(w => this.walls.create(w.x, w.y, 'wall').setScale(w.scaleX, w.scaleY).refreshBody());
         }
 
-        this.spikes = this.physics.add.staticGroup();
-        levelData.spikes.forEach(s => this.spikes.create(s.x, s.y, 'spike').setScale(s.scale).refreshBody());
+        this.spikes = this.physics.add.group();
+        levelData.spikes.forEach(s => {
+            const newSpike = new Spike(this, s.x, s.y, 'spike', s);
+            this.spikes.add(newSpike);
+            newSpike.body.setAllowGravity(false);
+            newSpike.body.setImmovable(true);
+        });
 
         // --- CRIAÇÃO DO JOGADOR USANDO A CLASSE ---
         this.player = new Player(this, levelData.playerStart.x, levelData.playerStart.y);

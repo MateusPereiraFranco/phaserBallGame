@@ -34,6 +34,10 @@ export default class PreloaderScene extends Phaser.Scene {
         for (let i = 1; i <= 4; i++) this.load.image(`shoot_${i}`, `assets/images/player/shoot/shoot_${i}.png`);
         for (let i = 1; i <= 9; i++) this.load.image(`runShoot_${i}`, `assets/images/player/runShoot/runShoot_${i}.png`);
 
+        for (let i = 1; i <= 8; i++) {
+            this.load.image(`jumpShoot_${i}`, `assets/images/player/jumpShoot/jumpShoot_${i}.png`);
+        }
+
         for (let i = 1; i <= 5; i++) {
             this.load.image(`bullet_${i}`, `assets/images/effects/fireball/bullet_${i}.png`);
         }
@@ -101,6 +105,9 @@ export default class PreloaderScene extends Phaser.Scene {
 
         const runShootFrames = []; for (let i = 1; i <= 8; i++) runShootFrames.push({ key: `runShoot_${i}` });
         this.anims.create({ key: 'runShoot', frames: runShootFrames, frameRate: 15, repeat: 0 });
+
+        const jumpShootFrames = []; for (let i = 1; i <= 8; i++) jumpShootFrames.push({ key: `jumpShoot_${i}` });
+        this.anims.create({ key: 'jumpShoot', frames: jumpShootFrames, frameRate: 15, repeat: 0 });
 
         // FIREBALLS **************************************************************************************************************
         const fireballFrames = [];

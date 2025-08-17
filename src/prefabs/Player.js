@@ -40,10 +40,12 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.isShooting = true;
 
         // Toca a animação correta com base no movimento
-        if (this.body.velocity.x !== 0) {
+        if (!this.body.touching.down) {
+            this.play('jumpShoot', true);
+        } else if (this.body.velocity.x !== 0) {
             this.play('runShoot', true);
         } else {
-            //this.setVelocityX(0);
+            this.setVelocityX(0);
             this.play('shoot', true);
         }
 
@@ -53,7 +55,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
     handleAnimationComplete(animation) {
         // Se a animação de tiro (parado ou correndo) terminou, reseta o estado
-        if (animation.key === 'shoot' || animation.key === 'runShoot') {
+        if (animation.key === 'shoot' || animation.key === 'runShoot' || animation.key === 'jumpShoot') {
             this.isShooting = false;
         }
 
