@@ -1,0 +1,28 @@
+{
+  "playerStart": { "x": 100, "y": 400 },
+  "platforms": [
+    { "x": 350, "y": 568, "scaleX": 600, "scaleY": 2 },
+    { "x": 550, "y": 400, "scaleX": 80, "scaleY": 2 },
+    { "x": 350, "y": 300, "scaleX": 80, "scaleY": 2 }
+  ],
+  "spikes": [
+  ],
+  "saws": [
+    { "x": 450, "y": 520, "scale": 0.5 }
+  ],
+  "barrels": [
+    { "x": 70, "y": 543, "scale": 0.2, "dropsItem": true, "dropType": "doubleJump" }
+  ],
+  "doubleJumpItems": [
+  ],
+  "fireballItems": [
+    { "x": 550, "y": 520, "scale": 2 },
+    { "x": 500, "y": 520, "scale": 2 }
+  ],
+  "doors": [
+    { "x": 350, "y": 250, "id": 1 }
+  ],
+  "switches": [
+    { "x": 200, "y": 520, "doorId": 1 }
+  ]
+}

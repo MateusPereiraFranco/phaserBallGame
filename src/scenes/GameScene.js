@@ -1,6 +1,10 @@
-import Player from '../prefabs/Player.js'; // Importa a classe Player
+import Player from '../prefabs/Player.js';
 import Fireball from '../prefabs/Fireball.js';
 import Spike from '../prefabs/Spike.js';
+import Door from '../prefabs/Door.js';
+import Switch from '../prefabs/Switch.js';
+import Saw from '../prefabs/Saw.js';
+import Barrel from '../prefabs/Barrel.js';
 
 export default class GameScene extends Phaser.Scene {
     constructor() {
@@ -39,6 +43,16 @@ export default class GameScene extends Phaser.Scene {
             levelData.walls.forEach(w => this.walls.create(w.x, w.y, 'wall').setScale(w.scaleX, w.scaleY).refreshBody());
         }
 
+        this.barrels = this.physics.add.group();
+        if (levelData.barrels) {
+            levelData.barrels.forEach(b => {
+                const newBarrel = new Barrel(this, b.x, b.y, 'barrel', b);
+                this.barrels.add(newBarrel);
+                newBarrel.body.setAllowGravity(false);
+                newBarrel.body.setImmovable(true);
+            });
+        }
+
         this.spikes = this.physics.add.group();
         levelData.spikes.forEach(s => {
             const newSpike = new Spike(this, s.x, s.y, 'spike', s);
@@ -46,6 +60,17 @@ export default class GameScene extends Phaser.Scene {
             newSpike.body.setAllowGravity(false);
             newSpike.body.setImmovable(true);
         });
+
+        this.saws = this.physics.add.group();
+        if (levelData.saws) {
+            levelData.saws.forEach(s => {
+                const newSaw = new Saw(this, s.x, s.y, 'saw', s);
+                this.saws.add(newSaw);
+                newSaw.body.setAllowGravity(false);
+                newSaw.body.setImmovable(true);
+                newSaw.body.setAngularVelocity(100);
+            });
+        }
 
         // --- CRIAÇÃO DO JOGADOR USANDO A CLASSE ---
         this.player = new Player(this, levelData.playerStart.x, levelData.playerStart.y);
@@ -74,6 +99,32 @@ export default class GameScene extends Phaser.Scene {
             levelData.colorChangeItems.forEach(itemData => this.colorChangeItemsGroup.create(itemData.x, itemData.y, 'colorChange').setScale(itemData.scale));
         }
 
+        // WORLD *********************************************************************************************************
+
+        this.doors = this.physics.add.group();
+        if (levelData.doors) {
+            levelData.doors.forEach(d => {
+                const newDoor = new Door(this, d.x, d.y, 'door_closed', d.id);
+                this.doors.add(newDoor);
+                newDoor.body.setAllowGravity(false);
+                newDoor.body.setImmovable(true);
+                newDoor.setDepth(-1);
+            });
+        }
+
+        this.physics.add.collider(this.fireballsGroup, this.barrels, this.hitBarrel, null, this);
+
+        this.switches = this.physics.add.group();
+        if (levelData.switches) {
+            levelData.switches.forEach(s => {
+                const newSwitch = new Switch(this, s.x, s.y, 'switch', s.doorId);
+                this.switches.add(newSwitch);
+                newSwitch.body.setAllowGravity(false);
+                newSwitch.body.setImmovable(true);
+                newSwitch.setDepth(-1);
+            });
+        }
+
         if (levelData.goal) {
             this.goalItem = this.physics.add.sprite(levelData.goal.x, levelData.goal.y, 'goal').setScale(levelData.goal.scale);
             this.physics.world.enable(this.goalItem);
@@ -84,12 +135,28 @@ export default class GameScene extends Phaser.Scene {
         this.physics.add.collider(this.player, this.platforms);
         this.physics.add.collider(this.player, this.walls);
         this.physics.add.collider(this.player, this.spikes, this.loseLife, null, this);
+        this.physics.add.collider(this.player, this.saws, this.loseLife, null, this);
         this.physics.add.overlap(this.player, this.doubleJumpItemsGroup, this.collectDoubleJumpItem, null, this);
         this.physics.add.overlap(this.player, this.colorChangeItemsGroup, this.collectColorChangeItem, null, this);
         this.physics.add.overlap(this.player, this.fireballItemsGroup, this.collectFireballItem, null, this);
         if (this.goalItem) this.physics.add.overlap(this.player, this.goalItem, this.goToNextLevel, null, this);
         this.physics.add.collider(this.fireballsGroup, this.platforms, (fireball) => fireball.setActive(false).setVisible(false));
         this.physics.add.collider(this.fireballsGroup, this.walls, (fireball) => fireball.setActive(false).setVisible(false));
+        this.physics.add.overlap(this.player, this.doors, this.enterDoor, null, this);  
+        this.physics.add.collider(this.player, this.barrels);
+        if (this.switches) {
+            this.physics.add.collider(
+                this.fireballsGroup,
+                this.switches,
+                this.hitSwitch, // Função a ser chamada SE a colisão ocorrer
+                (fireball, switchInstance) => {
+                    // Esta função decide SE a colisão deve acontecer.
+                    // Retorna 'true' para colidir, 'false' para ignorar.
+                    return !switchInstance.isHit; // Só colide se o interruptor NÃO foi atingido.
+                },
+                this
+            );
+        }
 
         // --- CONTROLES ---
         this.cursors = this.input.keyboard.createCursorKeys();
@@ -120,7 +187,8 @@ export default class GameScene extends Phaser.Scene {
             }
         }
 
-        if (this.player.y > 600) this.loseLife();
+        // Morte por queda
+        if (this.player.y > 617) this.loseLife();
     }
 
     showLevelTitle() {
@@ -195,11 +263,63 @@ export default class GameScene extends Phaser.Scene {
         this.cameras.main.flash(200, 255, 0, 255);
     }
 
-    goToNextLevel(player, goal) {
+    hitSwitch(fireball, switchInstance) {
+        fireball.setActive(false).setVisible(false); // Desativa a bola de fogo
+        switchInstance.hit(); // Chama o método do interruptor
+    }
+
+    hitBarrel(fireball, barrel) {
+        fireball.setActive(false).setVisible(false); // Desativa a bola de fogo
+        barrel.hit(); // Chama o método do barril
+    }
+
+    spawnItem(x, y, type) {
+        let item = null;
+        if (type === 'fireball') {
+            item = this.fireballItemsGroup.create(x, y, 'fireballItem');
+        } else if (type === 'doubleJump') {
+            item = this.doubleJumpItemsGroup.create(x, y, 'doubleJump');
+        }
+
+        if (item) {
+            item.setScale(2); // Define uma escala padrão para os itens dropados
+        }
+    }
+
+    enterDoor(player, door) {
+        // A sequência só inicia se a porta estiver aberta, o jogador no chão, NÃO estiver pulando e o jogo não estiver pausado.
+        if (door.isOpen && !this.isGamePaused) {
+            this.isGamePaused = true; 
+
+            player.setVelocity(0, 0);
+            player.body.setAllowGravity(false);
+            
+            player.play('run', true);
+
+            this.tweens.add({
+                targets: player,
+                x: door.x,
+                duration: 500,
+                ease: 'Linear',
+                onComplete: () => {
+                    this.tweens.add({
+                        targets: player,
+                        alpha: 0,
+                        duration: 300,
+                        onComplete: () => {
+                            this.goToNextLevel();
+                        }
+                    });
+                }
+            });
+        }
+    }
+
+    goToNextLevel() { // Modificada para não precisar do 'goal'
         const nextLevel = this.currentLevel + 1;
         const nextLevelDataKey = `level${nextLevel}Data`;
         if (this.cache.json.has(nextLevelDataKey)) {
-            this.scene.start('GameScene', { level: nextLevel, lives: this.lives, extraJumps: this.extraJumps });
+            this.scene.start('GameScene', { level: nextLevel, lives: this.lives, extraJumps: this.extraJumps, ammo: this.ammo });
         } else {
             console.log('VOCÊ VENCEU!');
             this.scene.start('GameScene', { level: 1, lives: 3 });

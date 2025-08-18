@@ -67,9 +67,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
     die() {
         if (this.isDead) return; // Previne que a função seja chamada múltiplas vezes
-
         this.isDead = true;
         this.setVelocity(0, 0); // Para o jogador completamente
+        this.body.setEnable(false);
         this.play('dead', true); // Toca a animação de morte
     }
 
