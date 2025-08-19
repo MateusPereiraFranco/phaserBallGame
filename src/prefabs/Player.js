@@ -11,7 +11,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
         // ignorando o espaço transparente excessivo da imagem.
         // Estes valores foram ajustados para melhor corresponder à arte do personagem.
-        this.body.setSize(this.width * 0.4, this.height * 0.8);
+        this.body.setSize(this.width * 0.3, this.height * 0.8);
         this.body.setOffset(this.width * 0.3, this.height * 0.15);
 
         this.setBounce(0.1);

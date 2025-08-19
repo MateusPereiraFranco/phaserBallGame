@@ -61,13 +61,13 @@ export default class PreloaderScene extends Phaser.Scene {
         this.load.image('switch-on', 'assets/images/world/switch/switchOn.png');
         this.load.image('saw', 'assets/images/world/saw/Saw.png');
         this.load.image('barrel', 'assets/images/world/barrel/barrel.png');
+        this.load.image('spike', 'assets/images/world/spike/spike.png');
     }
 
     create() {
         // --- GERAÇÃO DAS TEXTURAS DOS ITENS E CENÁRIO ---
         this.textures.generate('platform', { data: ['1'], pixelWidth: 1, palette: { 0: '#a2d934ff', 1: '#f8faf7ff' } });
         this.textures.generate('wall', { data: ['1'], pixelWidth: 1, palette: { 0: '#0000', 1: '#888888' } });
-        this.textures.generate('spike', { data: ['010', '111'], pixelWidth: 3, palette: { 0: '#0000', 1: '#ff4d4d' } });
         this.textures.generate('doubleJump', { data: ['010', '111', '010'], pixelWidth: 3, palette: { 0: '#0000', 1: '#ffd700' } });
         this.textures.generate('goal', { data: ['111', '101', '111'], pixelWidth: 3, palette: { 0: '#0000', 1: '#00ff00' } });
         this.textures.generate('colorChange', { data: ['1', '2'], pixelWidth: 2, palette: { 0: '#0000', 1: '#ff00ff', 2: '#a020f0' } });
@@ -174,6 +174,6 @@ export default class PreloaderScene extends Phaser.Scene {
             repeat: -1
         });
 
-        this.scene.start('GameScene', { level: 9 });
+        this.scene.start('GameScene', { level: 2 });
     }
 }

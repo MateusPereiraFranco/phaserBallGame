@@ -24,7 +24,7 @@ export default class GameScene extends Phaser.Scene {
 
     init(data) {
         this.currentLevel = data.level || 1;
-        this.lives = data.lives !== undefined ? data.lives : 3;
+        this.lives = data.lives !== undefined ? data.lives : 666;
         this.initialExtraJumps = data.extraJumps || 0;
         this.ammo = data.ammo || 0;
         this.specialCoins = data.specialCoins || 0;

@@ -8,7 +8,7 @@ export default class Spike extends Phaser.Physics.Arcade.Sprite {
         scene.physics.add.existing(this);
 
         // Define as propriedades com base nos dados do JSON
-        this.setScale(data.scale || 1);
+        this.setScale(data.scale || 0.25);
         if (data.angle) {
             this.setAngle(data.angle);
         }
