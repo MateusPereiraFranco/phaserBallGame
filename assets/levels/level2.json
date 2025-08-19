@@ -2,12 +2,14 @@
   "playerStart": { "x": 100, "y": 400 },
   "platforms": [
     { "x": 100, "y": 568, "scaleX": 400, "scaleY": 2 },
-    { "x": 150, "y": 450, "scaleX": 25, "scaleY": 2 },
-    { "x": 650, "y": 400, "scaleX": 25, "scaleY": 2 },
-    { "x": 400, "y": 400, "scaleX": 20, "scaleY": 2 }
+    { "x": 400, "y": 520, "scaleX": 25, "scaleY": 2 },
+    { "x": 500, "y": 480, "scaleX": 25, "scaleY": 2 },
+    { "x": 400, "y": 420, "scaleX": 25, "scaleY": 2 },
+    { "x": 500, "y": 380, "scaleX": 25, "scaleY": 2 },
+    { "x": 600, "y": 420, "scaleX": 20, "scaleY": 2 }
   ],
   "walls": [
-    { "x": 570, "y": 400, "scaleX": 2, "scaleY": 300 }
+    { "x": 570, "y": 450, "scaleX": 2, "scaleY": 300 }
   ],
   "spikes": [
     { "x": 580, "y": 375, "scale": 2 },
@@ -21,6 +23,6 @@
     { "x": 708, "y": 375, "scale": 2 },
     { "x": 724, "y": 375, "scale": 2 }
   ],
-  "doubleJumpItems": [{ "x": 400, "y": 240, "scale": 2 }],
+  "doubleJumpItems": [{ "x": 400, "y": 300, "scale": 2 }],
   "goal": { "x": 750, "y": 350, "scale": 2 }
 }

@@ -14,6 +14,8 @@ export default class PreloaderScene extends Phaser.Scene {
         this.load.json('level8Data', 'assets/levels/level8.json');
         this.load.json('level9Data', 'assets/levels/level9.json');
         this.load.json('level10Data', 'assets/levels/level10.json');
+        this.load.json('level11Data', 'assets/levels/level11.json');
+        this.load.json('level12Data', 'assets/levels/level12.json');
 
         // --- CARREGANDO OS FRAMES INDIVIDUAIS DO ROBÔ ---
         // Assumimos que você renomeou e colocou os arquivos em 'assets/images/player/'
@@ -46,6 +48,10 @@ export default class PreloaderScene extends Phaser.Scene {
 
         for (let i = 1; i <= 5; i++) {
             this.load.image(`bullet_${i}`, `assets/images/effects/fireball/bullet_${i}.png`);
+        }
+
+        for (let i = 11; i <= 20; i++) {
+            this.load.image(`specialCoins_${i}`, `assets/images/colectibles/specialCoins/Gold_${i}.png`);
         }
 
         this.load.image('door_closed', 'assets/images/world/door/door_closed.png');
@@ -157,6 +163,17 @@ export default class PreloaderScene extends Phaser.Scene {
             frameRate: 10
         });
 
-        this.scene.start('GameScene', { level: 10 });
+        const specialCoins = [];
+        for (let i = 11; i <= 20; i++) {
+            specialCoins.push({ key: `specialCoins_${i}` });
+        }
+        this.anims.create({
+            key: 'special-coins',
+            frames: specialCoins,
+            frameRate: 10,
+            repeat: -1
+        });
+
+        this.scene.start('GameScene', { level: 9 });
     }
 }

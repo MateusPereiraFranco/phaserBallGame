@@ -4,7 +4,7 @@
     { "x": 100, "y": 568, "scaleX": 400, "scaleY": 2 }
   ],
   "walls": [
-    { "x": 570, "y": 400, "scaleX": 2, "scaleY": 300 }
+    { "x": 450, "y": 480, "scaleX": 2, "scaleY": 100 }
   ],
   "spikes": [
     { "x": 580, "y": 375, "scale": 2 },
@@ -19,8 +19,8 @@
     { "x": 724, "y": 375, "scale": 2 }
   ],
   "doubleJumpItems": [
-    { "x": 400, "y": 400, "scale": 2 },
+    { "x": 400, "y": 450, "scale": 2 },
     { "x": 200, "y": 500, "scale": 2 }
   ],
-  "goal": { "x": 750, "y": 350, "scale": 2 }
+  "goal": { "x": 600, "y": 450, "scale": 2 }
 }

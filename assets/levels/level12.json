@@ -1,0 +1,53 @@
+{
+  "playerStart": { "x": 100, "y": 400 },
+  "platforms": [
+    { "x": 200, "y": 570, "scaleX": 1000, "scaleY": 2 },
+    {
+      "type": "moving",
+      "x": 100, "y": 500, "scaleX": 100, "scaleY": 2,
+      "movement": {
+        "type": "horizontal",
+        "start": 100,
+        "end": 300,
+        "speed": 60
+      }
+    },
+    {
+      "type": "moving",
+      "x": 500, "y": 400, "scaleX": 100, "scaleY": 2,
+      "movement": {
+        "type": "vertical",
+        "start": 400,
+        "end": 500,
+        "speed": 60
+      }
+    },
+    {
+      "type": "falling",
+      "x": 400, "y": 450, "scaleX": 15, "scaleY": 2
+    }
+  ],
+  "spikes": [
+  ],
+  "specialCoins": [
+    { "x": 150, "y": 400 },
+    { "x": 250, "y": 350 }
+],
+  
+  "barrels": [
+    { "x": 300, "y": 543, "scale": 0.2, "dropsItem": true, "dropType": "fireball" }
+  ],
+  "doubleJumpItems": [
+    { "x": 400, "y": 400, "scale": 2 },
+    { "x": 200, "y": 500, "scale": 2 }
+  ],
+  "fireballItems": [
+    { "x": 550, "y": 520, "scale": 2 }  
+  ],
+  "doors": [
+    { "x": 600, "y": 520, "id": 1 }
+  ],
+  "switches": [
+    { "x": 200, "y": 520, "doorId": 1 }
+  ]
+}

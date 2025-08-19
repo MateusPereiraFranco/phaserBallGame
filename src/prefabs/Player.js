@@ -1,5 +1,5 @@
 export default class Player extends Phaser.Physics.Arcade.Sprite {
-    constructor(scene, x, y) {
+    constructor(scene, x, y, initialExtraJumps = 0) {
         // Inicia o sprite com o primeiro frame da animação 'idle'
         super(scene, x, y, 'idle_1');
 
@@ -19,6 +19,12 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
         this.isDead = false;
         this.isShooting = false;
+        this.onMovingPlatform = false
+        this.platformVelocity = new Phaser.Math.Vector2();
+        this.jumpForce = 300
+
+        // --- NOVA LÓGICA DE PULO ---
+        this.extraJumps = initialExtraJumps;
 
         this.on('animationcomplete', this.handleAnimationComplete, this);
 
@@ -33,6 +39,29 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             this.clearTint();
         });
     }
+
+    // --- NOVO MÉTODO ---
+    // Adiciona um pulo extra e avisa a GameScene para atualizar a UI
+    addExtraJump() {
+        this.extraJumps++;
+        // Avisa a GameScene que os dados do jogador mudaram
+        this.emit('playerDataChanged');
+    }
+
+    // --- NOVO MÉTODO ---
+    // Centraliza a lógica de pulo
+    jump() {
+        if (this.isDead) return;
+
+        if (this.body.touching.down) {
+            this.setVelocityY(-this.jumpForce); // Pulo normal
+        } else if (this.extraJumps > 0) {
+            this.setVelocityY(-this.jumpForce); // Pulo extra
+            this.extraJumps--;
+            this.emit('playerDataChanged'); // Avisa a GameScene que os dados mudaram
+        }
+    }
+
 
     shoot() {
         if (this.isDead || this.isShooting) return;
@@ -73,8 +102,20 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.play('dead', true); // Toca a animação de morte
     }
 
+    preUpdate(time, delta) {
+        super.preUpdate(time, delta);
+        this.onMovingPlatform = false;
+        this.platformVelocity.reset();
+    }
+
     update(cursors) {
         if (this.isDead || !this.body) return;
+
+        // --- LÓGICA DE PULO MOVIDA PARA CÁ ---
+        const upJustPressed = Phaser.Input.Keyboard.JustDown(cursors.up);
+        if (upJustPressed) {
+            this.jump();
+        }
 
         // **CORREÇÃO**: A lógica de movimento agora SEMPRE é executada,
         // permitindo que o jogador pare de se mover mesmo durante a animação de tiro.
@@ -90,10 +131,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
                 this.setFlipX(false);
             }
         } else {
-            this.setVelocityX(0);
+            this.setVelocityX(this.platformVelocity.x);
         }
 
-        // **CORREÇÃO**: A máquina de estados de animação foi refinada.
         if (this.isShooting) {
             // Se o jogador para de se mover no meio da animação de tiro correndo,
             // troca para a animação de tiro parado.
@@ -102,7 +142,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             }
         } else if (!this.body.touching.down) {
             this.play('jump', true);
-        } else if (this.body.velocity.x !== 0) {
+        } else if (cursors.left.isDown || cursors.right.isDown) {
             this.play('run', true);
         } else {
             this.play('idle', true);

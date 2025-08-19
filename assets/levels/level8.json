@@ -9,7 +9,7 @@
     { "x": 450, "y": 520, "scale": 0.5 }
   ],
   "barrels": [
-    { "x": 300, "y": 543, "scale": 0.2, "dropsItem": true, "dropType": "fireball" }
+    { "x": 380, "y": 543, "scale": 0.2, "dropsItem": true, "dropType": "fireball" }
   ],
   "doubleJumpItems": [
   ],
