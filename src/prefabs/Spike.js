@@ -12,6 +12,8 @@ export default class Spike extends Phaser.Physics.Arcade.Sprite {
         if (data.angle) {
             this.setAngle(data.angle);
         }
+        this.body.setSize(this.width*0.5, this.height * 0.65);
+        this.body.setOffset(this.width * 0.25, this.height * 0.30);
         // Atualiza o corpo físico para corresponder às transformações
         this.refreshBody();
     }

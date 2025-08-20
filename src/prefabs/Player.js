@@ -11,8 +11,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
         // ignorando o espaço transparente excessivo da imagem.
         // Estes valores foram ajustados para melhor corresponder à arte do personagem.
-        this.body.setSize(this.width * 0.3, this.height * 0.8);
-        this.body.setOffset(this.width * 0.3, this.height * 0.15);
+        this.body.setSize(this.width * 0.2, this.height * 0.77);
+        this.body.setOffset(this.width * 0.35, this.height * 0.15);
 
         this.setBounce(0.1);
         this.body.setAllowGravity(false);
@@ -117,8 +117,6 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             this.jump();
         }
 
-        // **CORREÇÃO**: A lógica de movimento agora SEMPRE é executada,
-        // permitindo que o jogador pare de se mover mesmo durante a animação de tiro.
         if (cursors.left.isDown) {
             // Só permite mudar a velocidade se não estiver atirando parado
             if (!(this.isShooting && this.body.velocity.x === 0)) {

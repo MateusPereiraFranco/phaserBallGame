@@ -16,6 +16,7 @@ export default class PreloaderScene extends Phaser.Scene {
         this.load.json('level10Data', 'assets/levels/level10.json');
         this.load.json('level11Data', 'assets/levels/level11.json');
         this.load.json('level12Data', 'assets/levels/level12.json');
+        this.load.json('level13Data', 'assets/levels/level13.json');
 
         // --- CARREGANDO OS FRAMES INDIVIDUAIS DO ROBÔ ---
         // Assumimos que você renomeou e colocou os arquivos em 'assets/images/player/'
@@ -53,6 +54,26 @@ export default class PreloaderScene extends Phaser.Scene {
         for (let i = 11; i <= 20; i++) {
             this.load.image(`specialCoins_${i}`, `assets/images/colectibles/specialCoins/Gold_${i}.png`);
         }
+
+
+
+        this.load.spritesheet('drone_walk_sheet', 'assets/images/enemies/drone/Walk.png', {
+            frameWidth: 48, // IMPORTANTE: Ajuste se a largura de cada frame for diferente
+            frameHeight: 48 // IMPORTANTE: Ajuste se a altura de cada frame for diferente
+        });
+
+        // Carrega o spritesheet de 'soltar bomba'
+        this.load.spritesheet('drone_drop_sheet', 'assets/images/enemies/drone/Drop.png', {
+            frameWidth: 48, // IMPORTANTE: Ajuste se a largura de cada frame for diferente
+            frameHeight: 48 // IMPORTANTE: Ajuste se a altura de cada frame for diferente
+        });
+
+        this.load.image('bomb', 'assets/images/effects/bomb/bomb_1.png'); // Imagem estática da bomba caindo
+
+        for (let i = 1; i <= 10; i++) {
+            this.load.image(`explosion_${i}`, `assets/images/effects/explosion/Explosion01_frame${i}.png`);
+        }
+
 
         this.load.image('door_closed', 'assets/images/world/door/door_closed.png');
         this.load.image('door_opening', 'assets/images/world/door/door_opening.png');
@@ -172,6 +193,37 @@ export default class PreloaderScene extends Phaser.Scene {
             frames: specialCoins,
             frameRate: 10,
             repeat: -1
+        });
+
+        // Enemies *******************************************************************
+
+        this.anims.create({
+            key: 'drone-walk',
+            // Usa todos os frames do spritesheet 'drone_walk_sheet'
+            frames: this.anims.generateFrameNumbers('drone_walk_sheet'),
+            frameRate: 8,
+            repeat: -1
+        });
+
+        this.anims.create({
+            key: 'drone-drop',
+            // Usa todos os frames do spritesheet 'drone_drop_sheet'
+            frames: this.anims.generateFrameNumbers('drone_drop_sheet'),
+            frameRate: 12,
+            repeat: 0 // Toca só uma vez
+        });
+
+        this.anims.create({
+            key: 'explosion',
+            frames: [
+                { key: 'explosion_1' },
+                { key: 'explosion_2' },
+                { key: 'explosion_3' },
+                { key: 'explosion_4' },
+                { key: 'explosion_5' },
+            ],
+            frameRate: 15,
+            repeat: 0 // Toca só uma vez
         });
 
         this.scene.start('GameScene', { level: 2 });

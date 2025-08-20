@@ -8,6 +8,9 @@ import Barrel from "../prefabs/Barrel.js";
 import MovingPlatform from "../prefabs/MovingPlatform.js";
 import FallingPlatform from "../prefabs/FallingPlatform.js";
 import SpecialCoin from "../prefabs/SpecialCoin.js";
+import Drone from "../prefabs/Drone.js";
+import Bomb from "../prefabs/Bomb.js";
+import Explosion from "../prefabs/Explosion.js";
 
 export default class GameScene extends Phaser.Scene {
     constructor() {
@@ -31,14 +34,11 @@ export default class GameScene extends Phaser.Scene {
     }
 
     create() {
-        //this.physics.world.createDebugGraphic();
+        this.physics.world.createDebugGraphic();
         this.isGamePaused = true;
         const levelDataKey = `level${this.currentLevel}Data`;
         const levelData = this.cache.json.get(levelDataKey);
 
-        // --- CORREÇÃO AQUI ---
-        // Passamos os dados iniciais diretamente para a UIScene no momento do 'launch'.
-        // Isso evita a 'race condition' e garante que a UI comece com os valores corretos.
         this.scene.launch("UIScene", {
             lives: this.lives,
             extraJumps: this.initialExtraJumps,
@@ -125,6 +125,22 @@ export default class GameScene extends Phaser.Scene {
             });
         }
 
+        this.dronesGroup = this.physics.add.group({
+            classType: Drone,
+            runChildUpdate: true,
+            allowGravity: false,
+            immovable: true
+        });
+        this.bombsGroup = this.physics.add.group({
+            classType: Bomb,
+            runChildUpdate: true
+        });
+        // O grupo de explosões não precisa de uma classe, pois são sprites temporários
+        this.explosionsGroup = this.physics.add.group({
+            classType: Explosion,
+            runChildUpdate: true
+        });
+
         // --- CRIAÇÃO DO JOGADOR USANDO A CLASSE E PASSANDO OS PULOS ---
         this.player = new Player(
             this,
@@ -202,6 +218,13 @@ export default class GameScene extends Phaser.Scene {
                 newSwitch.body.setAllowGravity(false);
                 newSwitch.body.setImmovable(true);
                 newSwitch.setDepth(-1);
+            });
+        }
+
+        if (levelData.drones) {
+            levelData.drones.forEach(droneData => {
+                const newDrone = new Drone(this, droneData.x, droneData.y, droneData);
+                this.dronesGroup.add(newDrone);
             });
         }
 
@@ -312,6 +335,17 @@ export default class GameScene extends Phaser.Scene {
             );
         }
 
+        this.physics.add.overlap(this.player, this.dronesGroup, this.loseLife, null, this);
+        this.physics.add.overlap(this.player, this.bombsGroup, this.handleBombImpact, null, this);
+        
+        // 2. QUANDO A EXPLOSÃO TOCA NO JOGADOR, VERIFICA O DANO DIRECIONAL
+        this.physics.add.overlap(this.player, this.explosionsGroup, this.handlePlayerExplosionDamage, null, this);
+
+        // Quando uma bomba colide com as plataformas, ela também explode
+        this.physics.add.collider(this.bombsGroup, this.platforms, this.handleBombImpact, null, this);
+        this.physics.add.collider(this.bombsGroup, this.movingPlatforms, this.handleBombImpact, null, this);
+        this.physics.add.collider(this.bombsGroup, this.fallingPlatforms, this.handleBombImpact, null, this);
+
         // --- CONTROLES ---
         this.cursors = this.input.keyboard.createCursorKeys();
         this.spacebar = this.input.keyboard.addKey(
@@ -400,6 +434,50 @@ export default class GameScene extends Phaser.Scene {
         }
 
         this.updateUI(); // Atualiza a interface
+    }
+
+    addBomb(x, y, bombData) {
+        const bomb = this.bombsGroup.get(x, y, 'bomb', bombData);
+        if (bomb) {
+            bomb.setActive(true);
+            bomb.setVisible(true);
+            bomb.body.setAllowGravity(true);
+            bomb.explosionData = bombData.explosion;
+        }
+    }
+
+    addExplosion(x, y, radius) {
+        const explosion = this.explosionsGroup.get(x, y);
+        if (explosion) {
+            explosion.launch(x, y, radius);
+            explosion.body.setAllowGravity(false)
+            explosion.setActive(true).setVisible(true);
+            explosion.body.setCircle(radius);
+            explosion.play('explosion');
+        }
+    }
+
+    handleBombImpact(object1, object2) {
+    // Identifica qual dos objetos é a bomba
+    const bombInstance = (object1 instanceof Bomb) ? object1 : object2;
+    // Identifica o outro objeto na colisão
+    const otherObject = (bombInstance === object1) ? object2 : object1;
+
+    // Garante que a bomba existe e está ativa antes de fazer qualquer coisa
+    if (bombInstance && bombInstance.active) {
+
+        if (otherObject instanceof Player) {
+            this.loseLife();
+        }
+
+        bombInstance.explode();
+    }
+}
+
+    handlePlayerExplosionDamage(player, explosion) {
+        if (player.body.center.y <= explosion.body.center.y) {
+            this.loseLife();
+        }
     }
 
     // --- FUNÇÕES DE CALLBACK ---
