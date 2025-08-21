@@ -34,7 +34,7 @@ export default class GameScene extends Phaser.Scene {
     }
 
     create() {
-        this.physics.world.createDebugGraphic();
+        //this.physics.world.createDebugGraphic();
         this.isGamePaused = true;
         const levelDataKey = `level${this.currentLevel}Data`;
         const levelData = this.cache.json.get(levelDataKey);
@@ -197,7 +197,6 @@ export default class GameScene extends Phaser.Scene {
                 const newDoor = new Door(this, d.x, d.y, "door_closed", d.id);
                 this.doors.add(newDoor);
                 newDoor.body.setAllowGravity(false);
-                newDoor.body.setImmovable(true);
                 newDoor.setDepth(-1);
             });
         }
@@ -242,9 +241,22 @@ export default class GameScene extends Phaser.Scene {
             this.player,
             this.movingPlatforms,
             (player, platform) => {
-                if (platform.body.touching.up && player.body.touching.down) {
-                    player.onMovingPlatform = true;
-                    player.platformVelocity.x = platform.body.velocity.x;
+                // A verificação 'body.touching' pode ser falha quando os corpos estão em repouso.
+                // Uma verificação mais robusta é checar a posição do jogador em relação à plataforma.
+                // Verificamos se a base do jogador está na mesma altura do topo da plataforma (com uma pequena tolerância)
+                // e se o jogador não está se movendo para cima (para não ativar ao pular por baixo).
+                const playerIsOnTop = player.body.bottom <= platform.body.top + 5 && player.body.velocity.y >= 0;
+
+                if (playerIsOnTop) {
+                    if (platform.movementData.type === 'horizontal') {
+                        // Para plataformas horizontais, passa a velocidade para o jogador.
+                        player.onMovingPlatform = true;
+                        player.platformVelocity.x = platform.body.velocity.x;
+                    } else if (platform.movementData.type === 'vertical') {
+                        // Para plataformas verticais, avisa-a que o jogador está em cima e manda-a subir.
+                        platform.playerIsOn = true;
+                        platform.moveUp();
+                    }
                 }
             },
             null,

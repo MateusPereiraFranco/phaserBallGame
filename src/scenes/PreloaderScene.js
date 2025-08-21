@@ -17,6 +17,7 @@ export default class PreloaderScene extends Phaser.Scene {
         this.load.json('level11Data', 'assets/levels/level11.json');
         this.load.json('level12Data', 'assets/levels/level12.json');
         this.load.json('level13Data', 'assets/levels/level13.json');
+        this.load.json('level14Data', 'assets/levels/level14.json');
 
         // --- CARREGANDO OS FRAMES INDIVIDUAIS DO ROBÔ ---
         // Assumimos que você renomeou e colocou os arquivos em 'assets/images/player/'
@@ -226,6 +227,6 @@ export default class PreloaderScene extends Phaser.Scene {
             repeat: 0 // Toca só uma vez
         });
 
-        this.scene.start('GameScene', { level: 2 });
+        this.scene.start('GameScene', { level: 13 });
     }
 }

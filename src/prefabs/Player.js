@@ -6,15 +6,12 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         scene.add.existing(this);
         scene.physics.add.existing(this);
 
-        // --- AJUSTES FÍSICOS E VISUAIS ---
         this.setScale(0.10);
 
-        // ignorando o espaço transparente excessivo da imagem.
-        // Estes valores foram ajustados para melhor corresponder à arte do personagem.
         this.body.setSize(this.width * 0.2, this.height * 0.77);
         this.body.setOffset(this.width * 0.35, this.height * 0.15);
 
-        this.setBounce(0.1);
+        this.setBounce(0);
         this.body.setAllowGravity(false);
 
         this.isDead = false;
@@ -23,12 +20,10 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.platformVelocity = new Phaser.Math.Vector2();
         this.jumpForce = 300
 
-        // --- NOVA LÓGICA DE PULO ---
         this.extraJumps = initialExtraJumps;
 
         this.on('animationcomplete', this.handleAnimationComplete, this);
 
-        // Inicia com a animação 'idle'
         this.play('idle');
     }
 
@@ -40,27 +35,32 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         });
     }
 
-    // --- NOVO MÉTODO ---
-    // Adiciona um pulo extra e avisa a GameScene para atualizar a UI
     addExtraJump() {
         this.extraJumps++;
-        // Avisa a GameScene que os dados do jogador mudaram
         this.emit('playerDataChanged');
     }
 
-    // --- NOVO MÉTODO ---
-    // Centraliza a lógica de pulo
-    jump() {
-        if (this.isDead) return;
+jump() {
+    // Se estiver morto ou em cooldown, não faz nada.
+    if (this.isDead || this.jumpCooldown) return;
 
-        if (this.body.touching.down) {
-            this.setVelocityY(-this.jumpForce); // Pulo normal
-        } else if (this.extraJumps > 0) {
-            this.setVelocityY(-this.jumpForce); // Pulo extra
+    const canJump = this.body.touching.down;
+    const canDoubleJump = !this.body.touching.down && this.extraJumps > 0;
+
+    if (canJump || canDoubleJump) {
+        this.setVelocityY(-this.jumpForce);
+
+        if (canDoubleJump) {
             this.extraJumps--;
-            this.emit('playerDataChanged'); // Avisa a GameScene que os dados mudaram
+            this.emit('playerDataChanged');
         }
+
+        this.jumpCooldown = true;
+        this.scene.time.delayedCall(250, () => {
+            this.jumpCooldown = false;
+        }, [], this);
     }
+}
 
 
     shoot() {
@@ -68,7 +68,6 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
         this.isShooting = true;
 
-        // Toca a animação correta com base no movimento
         if (!this.body.touching.down) {
             this.play('jumpShoot', true);
         } else if (this.body.velocity.x !== 0) {
@@ -78,7 +77,6 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             this.play('shoot', true);
         }
 
-        // Emite um evento para a GameScene saber que é para criar a bola de fogo
         this.emit('fire');
     }
 
@@ -99,7 +97,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.isDead = true;
         this.setVelocity(0, 0); // Para o jogador completamente
         this.body.setEnable(false);
-        this.play('dead', true); // Toca a animação de morte
+        this.play('dead', true);
     }
 
     preUpdate(time, delta) {
@@ -111,10 +109,11 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     update(cursors) {
         if (this.isDead || !this.body) return;
 
-        // --- LÓGICA DE PULO MOVIDA PARA CÁ ---
         const upJustPressed = Phaser.Input.Keyboard.JustDown(cursors.up);
         if (upJustPressed) {
             this.jump();
+        }else{
+            
         }
 
         if (cursors.left.isDown) {
@@ -122,11 +121,16 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             if (!(this.isShooting && this.body.velocity.x === 0)) {
                 this.setVelocityX(-200);
                 this.setFlipX(true);
+
+                // Ajusta o offset da hitbox para a esquerda
+                this.body.setOffset(this.width * 0.45, this.height * 0.15);
             }
         } else if (cursors.right.isDown) {
             if (!(this.isShooting && this.body.velocity.x === 0)) {
                 this.setVelocityX(200);
                 this.setFlipX(false);
+                // Ajusta o offset da hitbox para a direita (original)
+                this.body.setOffset(this.width * 0.35, this.height * 0.15);
             }
         } else {
             this.setVelocityX(this.platformVelocity.x);
