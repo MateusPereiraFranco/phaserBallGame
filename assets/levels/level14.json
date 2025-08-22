@@ -11,22 +11,6 @@
         "end": 450,
         "speed": 60
       }
-    },
-    {
-      "type": "falling",
-      "x": 250, "y": 400, "scaleX": 0.2, "scaleY": 0.2
-    },
-    {
-      "type": "falling",
-      "x": 300, "y": 350, "scaleX": 0.2, "scaleY": 0.2
-    },
-    {
-      "type": "falling",
-      "x": 350, "y": 300, "scaleX": 0.2, "scaleY": 0.2
-    },
-    {
-      "type": "falling",
-      "x": 400, "y": 250, "scaleX": 0.2, "scaleY": 0.2
     }
   ],
   "spikes": [

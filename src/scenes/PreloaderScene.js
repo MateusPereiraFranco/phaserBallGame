@@ -84,6 +84,9 @@ export default class PreloaderScene extends Phaser.Scene {
         this.load.image('saw', 'assets/images/world/saw/Saw.png');
         this.load.image('barrel', 'assets/images/world/barrel/barrel.png');
         this.load.image('spike', 'assets/images/world/spike/spike.png');
+        this.load.image('movingPlatform', 'assets/images/world/platform/movingPlatform/movingPlatform.png');
+        this.load.image('fallingPlatform', 'assets/images/world/platform/fallingPlatform/fallingPlatform.png');
+
     }
 
     create() {
@@ -222,11 +225,16 @@ export default class PreloaderScene extends Phaser.Scene {
                 { key: 'explosion_3' },
                 { key: 'explosion_4' },
                 { key: 'explosion_5' },
+                { key: 'explosion_6' },
+                { key: 'explosion_7' },
+                { key: 'explosion_8' },
+                { key: 'explosion_9' },
+                { key: 'explosion_10' },
             ],
-            frameRate: 15,
+            frameRate: 40,
             repeat: 0 // Toca só uma vez
         });
 
-        this.scene.start('GameScene', { level: 13 });
+        this.scene.start('GameScene', { level: 4 });
     }
 }

@@ -4,7 +4,7 @@
     { "x": 200, "y": 570, "scaleX": 1000, "scaleY": 2 },
     {
       "type": "moving",
-      "x": 100, "y": 500, "scaleX": 100, "scaleY": 2,
+      "x": 100, "y": 500, "scaleX": 0.4, "scaleY": 0.3,
       "movement": {
         "type": "horizontal",
         "start": 100,
@@ -14,7 +14,7 @@
     },
     {
       "type": "moving",
-      "x": 500, "y": 500, "scaleX": 100, "scaleY": 2,
+      "x": 500, "y": 500, "scaleX": 0.4, "scaleY": 0.3,
       "movement": {
         "type": "vertical",
         "start": 500,
@@ -24,7 +24,7 @@
     },
     {
       "type": "falling",
-      "x": 400, "y": 450, "scaleX": 15, "scaleY": 2
+      "x": 400, "y": 450, "scaleX": 0.2, "scaleY": 0.2
     }
   ],
   "spikes": [

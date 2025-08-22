@@ -9,15 +9,12 @@ export default class FallingPlatform extends Phaser.Physics.Arcade.Sprite {
         this.initialY = y;
 
         // Configurações da plataforma
-        this.setScale(data.scaleX || 1, data.scaleY || 1).refreshBody();
+        this.setScale(data.scaleX || 0.2, data.scaleY || 0.2).refreshBody();
 
         // Estado para controlar se a queda já foi acionada
         this.fallTriggered = false;
     }
 
-    /**
-     * Aciona a sequência de queda da plataforma.
-     */
     startFall() {
         // Impede que a função seja chamada várias vezes
         if (this.fallTriggered) {
@@ -46,9 +43,6 @@ export default class FallingPlatform extends Phaser.Physics.Arcade.Sprite {
         });
     }
 
-    /**
-     * Reseta a plataforma para sua posição e estado originais.
-     */
     resetPlatform() {
         // Para a física e o movimento
         this.body.setAllowGravity(false);

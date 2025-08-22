@@ -4,16 +4,10 @@ export default class MovingPlatform extends Phaser.Physics.Arcade.Sprite {
         scene.add.existing(this);
         scene.physics.add.existing(this);
 
-        this.setScale(data.scaleX || 1, data.scaleY || 1).refreshBody();
+        this.setScale(data.scaleX || 0.4, data.scaleY || 0.3).refreshBody();
         this.setImmovable(true);
         this.body.setAllowGravity(false);
 
-        // Apenas para colisões na parte de cima ******************************************************************************
-        //this.body.checkCollision.down = false;
-        //this.body.checkCollision.left = false;
-        //this.body.checkCollision.right = false;
-
-        // Guarda os dados de movimento e o estado atual
         this.movementData = data.movement;
         this.isMoving = false;
         this.playerIsOn = false;
@@ -143,7 +137,7 @@ export default class MovingPlatform extends Phaser.Physics.Arcade.Sprite {
         const duration = (distance / speed) * 1000;
 
         this.isMoving = true;
-        this.isAtTop = false; // Não está mais no topo
+        this.isAtTop = false;
 
         this.scene.tweens.add({
             targets: this,

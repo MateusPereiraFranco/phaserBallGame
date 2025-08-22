@@ -27,14 +27,13 @@ export default class GameScene extends Phaser.Scene {
 
     init(data) {
         this.currentLevel = data.level || 1;
-        this.lives = data.lives !== undefined ? data.lives : 666;
+        this.lives = data.lives !== undefined ? data.lives : 3;
         this.initialExtraJumps = data.extraJumps || 0;
         this.ammo = data.ammo || 0;
         this.specialCoins = data.specialCoins || 0;
     }
 
     create() {
-        //this.physics.world.createDebugGraphic();
         this.isGamePaused = true;
         const levelDataKey = `level${this.currentLevel}Data`;
         const levelData = this.cache.json.get(levelDataKey);
@@ -58,10 +57,10 @@ export default class GameScene extends Phaser.Scene {
         });
         levelData.platforms.forEach((p) => {
             if (p.type === "moving") {
-                const newPlatform = new MovingPlatform(this, p.x, p.y, "platform", p);
+                const newPlatform = new MovingPlatform(this, p.x, p.y, "movingPlatform", p);
                 this.movingPlatforms.add(newPlatform);
             } else if (p.type === "falling") {
-                const newPlatform = new FallingPlatform(this, p.x, p.y, "platform", p);
+                const newPlatform = new FallingPlatform(this, p.x, p.y, "fallingPlatform", p);
                 newPlatform.setImmovable(true);
                 newPlatform.body.setAllowGravity(false);
                 this.fallingPlatforms.add(newPlatform);
@@ -135,26 +134,23 @@ export default class GameScene extends Phaser.Scene {
             classType: Bomb,
             runChildUpdate: true
         });
-        // O grupo de explosões não precisa de uma classe, pois são sprites temporários
         this.explosionsGroup = this.physics.add.group({
             classType: Explosion,
             runChildUpdate: true
         });
 
-        // --- CRIAÇÃO DO JOGADOR USANDO A CLASSE E PASSANDO OS PULOS ---
+        // --- CRIAÇÃO DO JOGADOR ---
         this.player = new Player(
             this,
             levelData.playerStart.x,
             levelData.playerStart.y,
-            this.initialExtraJumps // Passa o valor para o construtor do Player
+            this.initialExtraJumps
         );
         this.player.on("deathComplete", this.handlePlayerDeath, this);
         this.player.on("fire", this.fireFireball, this);
-        // Ouve o evento do jogador para saber quando atualizar a UI
         this.player.on("playerDataChanged", this.updateUI, this);
 
-
-        // --- CRIAÇÃO DOS ITENS ---
+        // ... (criação de itens continua igual) ...
         this.doubleJumpItemsGroup = this.physics.add.group({ allowGravity: false });
         if (levelData.doubleJumpItems) {
             levelData.doubleJumpItems.forEach((itemData) =>
@@ -163,7 +159,6 @@ export default class GameScene extends Phaser.Scene {
                 .setScale(itemData.scale)
             );
         }
-
         this.fireballItemsGroup = this.physics.add.group({ allowGravity: false });
         if (levelData.fireballItems) {
             levelData.fireballItems.forEach((itemData) =>
@@ -172,16 +167,12 @@ export default class GameScene extends Phaser.Scene {
                 .setScale(itemData.scale)
             );
         }
-
         this.fireballsGroup = this.physics.add.group({
             classType: Fireball,
             runChildUpdate: true,
             allowGravity: false,
         });
-
-        this.colorChangeItemsGroup = this.physics.add.group({
-            allowGravity: false,
-        });
+        this.colorChangeItemsGroup = this.physics.add.group({ allowGravity: false });
         if (levelData.colorChangeItems) {
             levelData.colorChangeItems.forEach((itemData) =>
                 this.colorChangeItemsGroup
@@ -190,7 +181,8 @@ export default class GameScene extends Phaser.Scene {
             );
         }
 
-        // WORLD
+
+        // --- WORLD ---
         this.doors = this.physics.add.group();
         if (levelData.doors) {
             levelData.doors.forEach((d) => {
@@ -201,13 +193,7 @@ export default class GameScene extends Phaser.Scene {
             });
         }
 
-        this.physics.add.collider(
-            this.fireballsGroup,
-            this.barrels,
-            this.hitBarrel,
-            null,
-            this
-        );
+        this.physics.add.collider(this.fireballsGroup, this.barrels, this.hitBarrel, null, this);
 
         this.switches = this.physics.add.group();
         if (levelData.switches) {
@@ -236,144 +222,110 @@ export default class GameScene extends Phaser.Scene {
         }
 
         // --- CONFIGURAÇÃO DAS COLISÕES E OVERLAPS ---
-        this.physics.add.collider(this.player, this.platforms);
+        this.physics.add.collider(this.player, this.platforms, (player) => {
+            if (player.body.blocked.down) {
+                if (player.platformStuckOn) {
+                    player.platformStuckOn = null;
+                }
+            }
+        });
+
+        // <-- ALTERADO: Lógica do collider de plataformas móveis foi simplificada
         this.physics.add.collider(
             this.player,
-            this.movingPlatforms,
+            [this.movingPlatforms, this.fallingPlatforms],
             (player, platform) => {
-                // A verificação 'body.touching' pode ser falha quando os corpos estão em repouso.
-                // Uma verificação mais robusta é checar a posição do jogador em relação à plataforma.
-                // Verificamos se a base do jogador está na mesma altura do topo da plataforma (com uma pequena tolerância)
-                // e se o jogador não está se movendo para cima (para não ativar ao pular por baixo).
-                const playerIsOnTop = player.body.bottom <= platform.body.top + 5 && player.body.velocity.y >= 0;
+                // Este callback agora roda para ambos os tipos de plataforma.
+                if (platform.body.touching.up && player.body.touching.down) {
+                    // "Gruda" o jogador na plataforma, não importa o tipo.
+                    player.platformStuckOn = platform;
 
-                if (playerIsOnTop) {
-                    if (platform.movementData.type === 'horizontal') {
-                        // Para plataformas horizontais, passa a velocidade para o jogador.
-                        player.onMovingPlatform = true;
-                        player.platformVelocity.x = platform.body.velocity.x;
-                    } else if (platform.movementData.type === 'vertical') {
-                        // Para plataformas verticais, avisa-a que o jogador está em cima e manda-a subir.
-                        platform.playerIsOn = true;
+                    // --- Lógica Específica por Tipo ---
+                    // Se for uma MovingPlatform vertical, ativa o movimento.
+                    if (platform instanceof MovingPlatform && platform.movementData.type === 'vertical') {
                         platform.moveUp();
+                    }
+                    // Se for uma FallingPlatform, ativa a sequência de queda.
+                    else if (platform instanceof FallingPlatform) {
+                        platform.startFall();
                     }
                 }
             },
             null,
             this
         );
-        this.physics.add.collider(
-            this.player,
-            this.fallingPlatforms,
-            this.triggerPlatformFall,
-            null,
-            this
-        );
 
         this.physics.add.collider(this.player, this.walls);
-        this.physics.add.collider(
-            this.player,
-            this.spikes,
-            this.loseLife,
-            null,
-            this
-        );
-        this.physics.add.collider(
-            this.player,
-            this.saws,
-            this.loseLife,
-            null,
-            this
-        );
-        this.physics.add.overlap(
-            this.player,
-            this.doubleJumpItemsGroup,
-            this.collectDoubleJumpItem,
-            null,
-            this
-        );
-        this.physics.add.overlap(
-            this.player,
-            this.colorChangeItemsGroup,
-            this.collectColorChangeItem,
-            null,
-            this
-        );
-        this.physics.add.overlap(
-            this.player,
-            this.fireballItemsGroup,
-            this.collectFireballItem,
-            null,
-            this
-        );
-        this.physics.add.overlap(
-            this.player,
-            this.specialCoinsGroup,
-            this.collectSpecialCoin,
-            null,
-            this
-        );
+        this.physics.add.collider(this.player, this.spikes, this.loseLife, null, this);
+        this.physics.add.collider(this.player, this.saws, this.loseLife, null, this);
+        this.physics.add.overlap(this.player, this.doubleJumpItemsGroup, this.collectDoubleJumpItem, null, this);
+        this.physics.add.overlap(this.player, this.colorChangeItemsGroup, this.collectColorChangeItem, null, this);
+        this.physics.add.overlap(this.player, this.fireballItemsGroup, this.collectFireballItem, null, this);
+        this.physics.add.overlap(this.player, this.specialCoinsGroup, this.collectSpecialCoin, null, this);
         if (this.goalItem)
-            this.physics.add.overlap(
-                this.player,
-                this.goalItem,
-                this.goToNextLevel,
-                null,
-                this
-            );
+            this.physics.add.overlap(this.player, this.goalItem, this.goToNextLevel, null, this);
         this.physics.add.collider(this.fireballsGroup, this.platforms, (fireball) =>
             fireball.setActive(false).setVisible(false)
         );
         this.physics.add.collider(this.fireballsGroup, this.walls, (fireball) =>
             fireball.setActive(false).setVisible(false)
         );
-        this.physics.add.overlap(
-            this.player,
-            this.doors,
-            this.enterDoor,
-            null,
-            this
-        );
-        this.physics.add.collider(this.player, this.barrels);
+        this.physics.add.overlap(this.player, this.doors, this.enterDoor, null, this);
+        this.physics.add.collider(this.player, this.barrels,  (player) => {
+            if (player.body.blocked.down) {
+                if (player.platformStuckOn) {
+                    player.platformStuckOn = null;
+                }
+            }
+        });
         if (this.switches) {
             this.physics.add.collider(
                 this.fireballsGroup,
                 this.switches,
                 this.hitSwitch,
-                (fireball, switchInstance) => {
-                    return !switchInstance.isHit;
-                },
+                (fireball, switchInstance) => !switchInstance.isHit,
                 this
             );
         }
-
         this.physics.add.overlap(this.player, this.dronesGroup, this.loseLife, null, this);
         this.physics.add.overlap(this.player, this.bombsGroup, this.handleBombImpact, null, this);
-        
-        // 2. QUANDO A EXPLOSÃO TOCA NO JOGADOR, VERIFICA O DANO DIRECIONAL
         this.physics.add.overlap(this.player, this.explosionsGroup, this.handlePlayerExplosionDamage, null, this);
-
-        // Quando uma bomba colide com as plataformas, ela também explode
         this.physics.add.collider(this.bombsGroup, this.platforms, this.handleBombImpact, null, this);
         this.physics.add.collider(this.bombsGroup, this.movingPlatforms, this.handleBombImpact, null, this);
         this.physics.add.collider(this.bombsGroup, this.fallingPlatforms, this.handleBombImpact, null, this);
 
         // --- CONTROLES ---
         this.cursors = this.input.keyboard.createCursorKeys();
-        this.spacebar = this.input.keyboard.addKey(
-            Phaser.Input.Keyboard.KeyCodes.SPACE
-        );
+        this.spacebar = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
 
         this.showLevelTitle();
     }
 
     update() {
-        if (!this.player || this.isGamePaused) return;
+        if (!this.player || this.isGamePaused || !this.player.body) return;
 
-        // O update do player agora cuida de todo o movimento, incluindo pulos
+        // <-- NOVO: Lógica principal para manter o jogador na plataforma
+        if (this.player.platformStuckOn) {
+            const playerBounds = this.player.getBounds();
+            const platformBounds = this.player.platformStuckOn.getBounds();
+
+            // Adiciona um pequeno offset para baixo para garantir que a intersecção seja detectada
+            // mesmo que os corpos estejam perfeitamente alinhados.
+            playerBounds.y += 1;
+
+            if (Phaser.Geom.Intersects.RectangleToRectangle(playerBounds, platformBounds)) {
+                // <-- ALTERADO: Corrigido para usar a altura do CORPO do jogador, não do sprite.
+                this.player.body.y = this.player.platformStuckOn.body.top - this.player.body.height;
+                this.player.body.velocity.x = this.player.platformStuckOn.body.velocity.x;
+                this.player.body.velocity.y = this.player.platformStuckOn.body.velocity.y;
+            } else {
+                // Se não há mais intersecção (jogador pulou ou caiu), quebra a conexão
+                this.player.platformStuckOn = null;
+            }
+        }
+
+        // O update do player agora cuida do movimento controlado pelo usuário
         this.player.update(this.cursors);
-
-        // --- LÓGICA DE PULO REMOVIDA DAQUI ---
 
         if (Phaser.Input.Keyboard.JustDown(this.spacebar)) {
             if (this.ammo > 0) {
@@ -385,6 +337,7 @@ export default class GameScene extends Phaser.Scene {
         if (this.player.y > 617) this.loseLife();
     }
 
+    // ... (O resto do seu código da GameScene continua igual) ...
     showLevelTitle() {
         const levelText = this.add
             .text(
@@ -407,10 +360,7 @@ export default class GameScene extends Phaser.Scene {
     }
 
     updateUI() {
-        // Se o jogador já foi criado, pega os pulos dele.
-        // Senão, usa o valor inicial que a cena recebeu.
         const extraJumps = this.player ? this.player.extraJumps : this.initialExtraJumps;
-
         this.events.emit("updateUI", {
             lives: this.lives,
             extraJumps: extraJumps,
@@ -423,36 +373,28 @@ export default class GameScene extends Phaser.Scene {
         const fireball = this.fireballsGroup.get();
         if (fireball) {
             const direction = this.player.flipX ? "left" : "right";
-            const spawnX = this.player.flipX ?
-                this.player.x - 20 :
-                this.player.x + 20;
+            const spawnX = this.player.flipX ? this.player.x - 20 : this.player.x + 20;
             fireball.fire(spawnX, this.player.y, direction);
-
             this.ammo--;
             this.updateUI();
         }
     }
 
     collectSpecialCoin(player, coin) {
-        coin.disableBody(true, true); // Remove a moeda da tela
+        coin.disableBody(true, true);
         this.specialCoins++;
-
-        // Verifica se o jogador coletou 10 moedas
         if (this.specialCoins >= 10) {
-            this.specialCoins = 0; // Reseta o contador
-            this.lives++; // Ganha uma vida
-            // Efeito visual opcional para o ganho de vida
+            this.specialCoins = 0;
+            this.lives++;
             this.cameras.main.flash(200, 100, 255, 100);
         }
-
-        this.updateUI(); // Atualiza a interface
+        this.updateUI();
     }
 
     addBomb(x, y, bombData) {
         const bomb = this.bombsGroup.get(x, y, 'bomb', bombData);
         if (bomb) {
-            bomb.setActive(true);
-            bomb.setVisible(true);
+            bomb.setActive(true).setVisible(true);
             bomb.body.setAllowGravity(true);
             bomb.explosionData = bombData.explosion;
         }
@@ -470,21 +412,15 @@ export default class GameScene extends Phaser.Scene {
     }
 
     handleBombImpact(object1, object2) {
-    // Identifica qual dos objetos é a bomba
-    const bombInstance = (object1 instanceof Bomb) ? object1 : object2;
-    // Identifica o outro objeto na colisão
-    const otherObject = (bombInstance === object1) ? object2 : object1;
-
-    // Garante que a bomba existe e está ativa antes de fazer qualquer coisa
-    if (bombInstance && bombInstance.active) {
-
-        if (otherObject instanceof Player) {
-            this.loseLife();
+        const bombInstance = (object1 instanceof Bomb) ? object1 : object2;
+        const otherObject = (bombInstance === object1) ? object2 : object1;
+        if (bombInstance && bombInstance.active) {
+            if (otherObject instanceof Player) {
+                this.loseLife();
+            }
+            bombInstance.explode();
         }
-
-        bombInstance.explode();
     }
-}
 
     handlePlayerExplosionDamage(player, explosion) {
         if (player.body.center.y <= explosion.body.center.y) {
@@ -492,7 +428,6 @@ export default class GameScene extends Phaser.Scene {
         }
     }
 
-    // --- FUNÇÕES DE CALLBACK ---
     loseLife() {
         if (this.isGamePaused || this.player.isDead) return;
         this.isGamePaused = true;
@@ -502,7 +437,6 @@ export default class GameScene extends Phaser.Scene {
     handlePlayerDeath() {
         this.lives--;
         this.updateUI();
-
         if (this.lives > 0) {
             this.cameras.main.fade(500, 0, 0, 0, false, (camera, progress) => {
                 if (progress === 1)
@@ -511,7 +445,7 @@ export default class GameScene extends Phaser.Scene {
                         lives: this.lives,
                         extraJumps: 0,
                         ammo: 0,
-                        specialCoins: this.specialCoin
+                        specialCoins: this.specialCoins
                     });
             });
         } else {
@@ -522,8 +456,7 @@ export default class GameScene extends Phaser.Scene {
 
     collectDoubleJumpItem(player, item) {
         item.disableBody(true, true);
-        player.addExtraJump(); // Chama o método do jogador
-        // A UI será atualizada pelo evento 'playerDataChanged'
+        player.addExtraJump();
         this.cameras.main.flash(200, 255, 255, 0);
     }
 
@@ -557,27 +490,17 @@ export default class GameScene extends Phaser.Scene {
         } else if (type === "doubleJump") {
             item = this.doubleJumpItemsGroup.create(x, y, "doubleJump");
         }
-
         if (item) {
             item.setScale(2);
-        }
-    }
-
-    triggerPlatformFall(player, platform) {
-        if (player.body.touching.down && platform.body.touching.up) {
-            platform.startFall();
         }
     }
 
     enterDoor(player, door) {
         if (door.isOpen && !this.isGamePaused) {
             this.isGamePaused = true;
-
             player.setVelocity(0, 0);
             player.body.setAllowGravity(false);
-
             player.play("run", true);
-
             this.tweens.add({
                 targets: player,
                 x: door.x,
@@ -604,7 +527,7 @@ export default class GameScene extends Phaser.Scene {
             this.scene.start("GameScene", {
                 level: nextLevel,
                 lives: this.lives,
-                extraJumps: 0, // Passa os pulos para o próximo nível
+                extraJumps: 0,
                 ammo: 0,
                 specialCoins: this.specialCoins
             });
@@ -614,3 +537,5 @@ export default class GameScene extends Phaser.Scene {
         }
     }
 }
+
+
