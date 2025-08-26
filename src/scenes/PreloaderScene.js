@@ -87,6 +87,11 @@ export default class PreloaderScene extends Phaser.Scene {
         this.load.image('movingPlatform', 'assets/images/world/platform/movingPlatform/movingPlatform.png');
         this.load.image('fallingPlatform', 'assets/images/world/platform/fallingPlatform/fallingPlatform.png');
 
+        //BACKGROUND -------------------------------------------
+
+        this.load.image('meu_tileset', 'assets/images/background/tileset/level_tileset.png');
+        this.load.tilemapTiledJSON('mapa_laboratorio', 'assets/images/background/json/background.json');
+
     }
 
     create() {
@@ -235,6 +240,6 @@ export default class PreloaderScene extends Phaser.Scene {
             repeat: 0 // Toca só uma vez
         });
 
-        this.scene.start('GameScene', { level: 4 });
+        this.scene.start('GameScene', { level: 1 });
     }
 }

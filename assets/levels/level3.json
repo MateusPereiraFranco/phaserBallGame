@@ -22,5 +22,10 @@
     { "x": 400, "y": 450, "scale": 2 },
     { "x": 200, "y": 500, "scale": 2 }
   ],
-  "goal": { "x": 600, "y": 450, "scale": 2 }
+  "goal": { "x": 600, "y": 450, "scale": 2 },
+  "background": {
+    "tilemapKey": "mapa_laboratorio",
+    "tilesetNameInTiled": "background",
+    "tilesetImageKey": "meu_tileset"
+  }
 }

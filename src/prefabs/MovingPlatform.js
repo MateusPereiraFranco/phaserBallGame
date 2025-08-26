@@ -56,6 +56,33 @@ export default class MovingPlatform extends Phaser.Physics.Arcade.Sprite {
             });
         }
         // Se for vertical, define a posição inicial
+
+        else if(type === 'verticalNoStop'){
+            this[property] = start;
+            const distance = Math.abs(end - start);
+            const duration = (distance / speed) * 1000;
+            const initialDirection = Math.sign(end - start);
+            let directionMultiplier = 1;
+
+            this.scene.tweens.add({
+                targets: this,
+                [property]: end,
+                duration: duration,
+                ease: 'Linear',
+                yoyo: true,
+                repeat: -1,
+                onYoyo: () => {
+                    directionMultiplier = -1;
+                },
+                onRepeat: () => {
+                    directionMultiplier = 1;
+                },
+                onUpdate: () => {
+                    this.body.setVelocityY(speed * initialDirection * directionMultiplier);
+                }
+            });
+
+        }
         else if (type === 'vertical') {
             this[property] = start;
         }

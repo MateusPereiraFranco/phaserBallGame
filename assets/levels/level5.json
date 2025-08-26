@@ -15,5 +15,10 @@
   ],
   "switches": [
     { "x": 200, "y": 520, "doorId": 1 }
-  ]
+  ], 
+  "background": {
+    "tilemapKey": "mapa_laboratorio",
+    "tilesetNameInTiled": "background",
+    "tilesetImageKey": "meu_tileset"
+  }
 }

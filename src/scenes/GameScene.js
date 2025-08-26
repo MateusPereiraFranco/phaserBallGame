@@ -34,9 +34,29 @@ export default class GameScene extends Phaser.Scene {
     }
 
     create() {
-        this.isGamePaused = true;
+
         const levelDataKey = `level${this.currentLevel}Data`;
         const levelData = this.cache.json.get(levelDataKey);
+
+    // --- CRIAÇÃO DO BACKGROUND (SE EXISTIR) ---
+    // Verifica se a informação do background existe no JSON do nível
+    if (levelData.background) {
+        const map = this.make.tilemap({ key: levelData.background.tilemapKey });
+
+        const tileset = map.addTilesetImage(
+            levelData.background.tilesetNameInTiled, 
+            levelData.background.tilesetImageKey
+        );
+
+        // Assumindo que o nome da camada é sempre 'Camada de Blocos 1'
+        const backgroundLayer = map.createLayer('Camada de Blocos 1', tileset, 0, 0);
+
+        if (backgroundLayer) {
+            backgroundLayer.setDepth(-10);
+        }
+    }
+
+        this.isGamePaused = true;
 
         this.scene.launch("UIScene", {
             lives: this.lives,
