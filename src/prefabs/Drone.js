@@ -66,6 +66,33 @@ export default class Drone extends Phaser.Physics.Arcade.Sprite {
         this.isDropping = false;
     }
 
+    takeHit() {
+        // Se já estiver morto, não faz nada
+        if (this.isDead) {
+            return;
+        }
+
+        this.isDead = true;
+
+        // Para todos os timers e movimentos
+        this.dropTimer.destroy();
+        if (this.moveTween) {
+            this.moveTween.stop();
+        }
+
+        // Desativa o corpo físico para que não interaja mais
+        this.body.setEnable(false);
+
+        // Toca a animação de morte, que agora deve funcionar
+        this.play('drone-death', true);
+
+        // Ouve o evento de conclusão da animação ESPECÍFICA para se autodestruir
+        this.once('animationcomplete-drone-death', () => {
+            this.destroy();
+        });
+    }
+
+
     // Limpa o timer quando o drone for destruído para evitar memory leaks
     destroy(fromScene) {
         this.dropTimer.destroy();

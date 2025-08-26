@@ -63,6 +63,11 @@ export default class PreloaderScene extends Phaser.Scene {
             frameHeight: 48 // IMPORTANTE: Ajuste se a altura de cada frame for diferente
         });
 
+        this.load.spritesheet('drone_death_sheet', 'assets/images/enemies/drone/drone_death_sheet.png', {
+            frameWidth: 64,  // Largura de cada frame na sua imagem
+            frameHeight: 64  // Altura de cada frame na sua imagem
+        });
+
         // Carrega o spritesheet de 'soltar bomba'
         this.load.spritesheet('drone_drop_sheet', 'assets/images/enemies/drone/Drop.png', {
             frameWidth: 48, // IMPORTANTE: Ajuste se a largura de cada frame for diferente
@@ -102,7 +107,7 @@ export default class PreloaderScene extends Phaser.Scene {
         this.textures.generate('goal', { data: ['111', '101', '111'], pixelWidth: 3, palette: { 0: '#0000', 1: '#00ff00' } });
         this.textures.generate('colorChange', { data: ['1', '2'], pixelWidth: 2, palette: { 0: '#0000', 1: '#ff00ff', 2: '#a020f0' } });
         this.textures.generate('fireballItem', { data: ['212', '111', '212'], pixelWidth: 3, palette: { 0: '#0000', 1: '#ff4500', 2: '#ff8c00' } });
-        
+
 
         // --- CRIAÇÃO DAS ANIMAÇÕES GLOBAIS DO ROBÔ ---
 
@@ -215,6 +220,14 @@ export default class PreloaderScene extends Phaser.Scene {
         });
 
         this.anims.create({
+            key: 'drone-death',      // O nome da animação que usamos no Drone.js
+            // Gera os frames do 0 ao 12 a partir do spritesheet
+            frames: this.anims.generateFrameNumbers('drone_death_sheet', { start: 0, end: 12 }),
+            frameRate: 12,           // Aumentamos a velocidade para uma explosão mais impactante
+            repeat: 0                // Toca a animação apenas uma vez
+        });
+
+        this.anims.create({
             key: 'drone-drop',
             // Usa todos os frames do spritesheet 'drone_drop_sheet'
             frames: this.anims.generateFrameNumbers('drone_drop_sheet'),
@@ -240,6 +253,6 @@ export default class PreloaderScene extends Phaser.Scene {
             repeat: 0 // Toca só uma vez
         });
 
-        this.scene.start('GameScene', { level: 1 });
+        this.scene.start('GameScene', { level: 13 });
     }
 }

@@ -38,23 +38,23 @@ export default class GameScene extends Phaser.Scene {
         const levelDataKey = `level${this.currentLevel}Data`;
         const levelData = this.cache.json.get(levelDataKey);
 
-    // --- CRIAÇÃO DO BACKGROUND (SE EXISTIR) ---
-    // Verifica se a informação do background existe no JSON do nível
-    if (levelData.background) {
-        const map = this.make.tilemap({ key: levelData.background.tilemapKey });
+        // --- CRIAÇÃO DO BACKGROUND (SE EXISTIR) ---
+        // Verifica se a informação do background existe no JSON do nível
+        if (levelData.background) {
+            const map = this.make.tilemap({ key: levelData.background.tilemapKey });
 
-        const tileset = map.addTilesetImage(
-            levelData.background.tilesetNameInTiled, 
-            levelData.background.tilesetImageKey
-        );
+            const tileset = map.addTilesetImage(
+                levelData.background.tilesetNameInTiled,
+                levelData.background.tilesetImageKey
+            );
 
-        // Assumindo que o nome da camada é sempre 'Camada de Blocos 1'
-        const backgroundLayer = map.createLayer('Camada de Blocos 1', tileset, 0, 0);
+            // Assumindo que o nome da camada é sempre 'Camada de Blocos 1'
+            const backgroundLayer = map.createLayer('Camada de Blocos 1', tileset, 0, 0);
 
-        if (backgroundLayer) {
-            backgroundLayer.setDepth(-10);
+            if (backgroundLayer) {
+                backgroundLayer.setDepth(-10);
+            }
         }
-    }
 
         this.isGamePaused = true;
 
@@ -96,9 +96,9 @@ export default class GameScene extends Phaser.Scene {
         if (levelData.walls) {
             levelData.walls.forEach((w) =>
                 this.walls
-                .create(w.x, w.y, "wall")
-                .setScale(w.scaleX, w.scaleY)
-                .refreshBody()
+                    .create(w.x, w.y, "wall")
+                    .setScale(w.scaleX, w.scaleY)
+                    .refreshBody()
             );
         }
 
@@ -175,16 +175,16 @@ export default class GameScene extends Phaser.Scene {
         if (levelData.doubleJumpItems) {
             levelData.doubleJumpItems.forEach((itemData) =>
                 this.doubleJumpItemsGroup
-                .create(itemData.x, itemData.y, "doubleJump")
-                .setScale(itemData.scale)
+                    .create(itemData.x, itemData.y, "doubleJump")
+                    .setScale(itemData.scale)
             );
         }
         this.fireballItemsGroup = this.physics.add.group({ allowGravity: false });
         if (levelData.fireballItems) {
             levelData.fireballItems.forEach((itemData) =>
                 this.fireballItemsGroup
-                .create(itemData.x, itemData.y, "fireballItem")
-                .setScale(itemData.scale)
+                    .create(itemData.x, itemData.y, "fireballItem")
+                    .setScale(itemData.scale)
             );
         }
         this.fireballsGroup = this.physics.add.group({
@@ -196,8 +196,8 @@ export default class GameScene extends Phaser.Scene {
         if (levelData.colorChangeItems) {
             levelData.colorChangeItems.forEach((itemData) =>
                 this.colorChangeItemsGroup
-                .create(itemData.x, itemData.y, "colorChange")
-                .setScale(itemData.scale)
+                    .create(itemData.x, itemData.y, "colorChange")
+                    .setScale(itemData.scale)
             );
         }
 
@@ -291,7 +291,7 @@ export default class GameScene extends Phaser.Scene {
             fireball.setActive(false).setVisible(false)
         );
         this.physics.add.overlap(this.player, this.doors, this.enterDoor, null, this);
-        this.physics.add.collider(this.player, this.barrels,  (player) => {
+        this.physics.add.collider(this.player, this.barrels, (player) => {
             if (player.body.blocked.down) {
                 if (player.platformStuckOn) {
                     player.platformStuckOn = null;
@@ -308,6 +308,7 @@ export default class GameScene extends Phaser.Scene {
             );
         }
         this.physics.add.overlap(this.player, this.dronesGroup, this.loseLife, null, this);
+        this.physics.add.collider(this.fireballsGroup, this.dronesGroup, this.hitDrone, null, this);
         this.physics.add.overlap(this.player, this.bombsGroup, this.handleBombImpact, null, this);
         this.physics.add.overlap(this.player, this.explosionsGroup, this.handlePlayerExplosionDamage, null, this);
         this.physics.add.collider(this.bombsGroup, this.platforms, this.handleBombImpact, null, this);
@@ -472,6 +473,15 @@ export default class GameScene extends Phaser.Scene {
             console.log("GAME OVER");
             this.scene.start("GameScene", { level: 1, lives: 3, specialCoins: 0 });
         }
+    }
+
+    hitDrone(fireball, drone) {
+        // Desativa a bola de fogo para que ela possa ser reutilizada
+        fireball.setActive(false).setVisible(false);
+        fireball.body.stop();
+
+        // Chama o método que criamos no drone
+        drone.takeHit();
     }
 
     collectDoubleJumpItem(player, item) {
