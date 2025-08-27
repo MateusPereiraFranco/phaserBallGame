@@ -1,7 +1,6 @@
 {
   "playerStart": { "x": 100, "y": 400 },
   "platforms": [
-    { "x": 100, "y": 568, "scaleX": 400, "scaleY": 2 }
   ],
   "walls": [
     { "x": 450, "y": 480, "scaleX": 2, "scaleY": 100 }
@@ -24,8 +23,8 @@
   ],
   "goal": { "x": 600, "y": 450, "scale": 2 },
   "background": {
-    "tilemapKey": "mapa_laboratorio",
-    "tilesetNameInTiled": "background",
+    "tilemapKey": "mapa_laboratorio2",
+    "tilesetNameInTiled": "BackgroundTiles",
     "tilesetImageKey": "meu_tileset"
   }
 }

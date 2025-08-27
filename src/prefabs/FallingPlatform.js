@@ -11,6 +11,10 @@ export default class FallingPlatform extends Phaser.Physics.Arcade.Sprite {
         // Configurações da plataforma
         this.setScale(data.scaleX || 0.2, data.scaleY || 0.2).refreshBody();
 
+        this.body.checkCollision.down=false
+        this.body.checkCollision.left=false
+        this.body.checkCollision.right=false
+
         // Estado para controlar se a queda já foi acionada
         this.fallTriggered = false;
     }

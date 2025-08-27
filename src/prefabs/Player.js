@@ -35,7 +35,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     jump() {
         if (this.isDead || this.jumpCooldown) return;
 
-        const canJump = this.body.touching.down || this.platformStuckOn; // <-- ALTERADO: Permite pular se estiver grudado
+        const canJump = this.body.touching.down || this.platformStuckOn || this.body.blocked.down; // <-- ALTERADO: Permite pular se estiver grudado
         const canDoubleJump = !canJump && this.extraJumps > 0;
 
         if (canJump || canDoubleJump) {
@@ -60,7 +60,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     shoot() {
         if (this.isDead || this.isShooting) return;
         this.isShooting = true;
-        if (!this.body.touching.down && !this.platformStuckOn) {
+        if (!this.body.touching.down || !this.body.blocked.down && !this.platformStuckOn) {
             this.play('jumpShoot', true);
         } else if (this.body.velocity.x !== 0) {
             this.play('runShoot', true);
@@ -120,7 +120,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         }
 
         // Lógica de animação
-        const onGround = this.body.touching.down || this.platformStuckOn; // <-- ALTERADO
+        const onGround = this.body.touching.down || this.body.blocked.down || this.platformStuckOn; // <-- ALTERADO
 
         if (this.isShooting) {
             if (this.body.velocity.x === 0 && this.anims.currentAnim.key === 'runShoot') {

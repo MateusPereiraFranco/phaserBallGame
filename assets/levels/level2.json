@@ -1,18 +1,16 @@
 {
-  "playerStart": { "x": 100, "y": 400 },
+  "playerStart": { "x": 100, "y": 500 },
   "platforms": [
-    { "x": 100, "y": 568, "scaleX": 400, "scaleY": 2 },
     { "x": 400, "y": 520, "scaleX": 25, "scaleY": 2 },
     { "x": 500, "y": 480, "scaleX": 25, "scaleY": 2 },
     { "x": 400, "y": 420, "scaleX": 25, "scaleY": 2 },
-    { "x": 500, "y": 380, "scaleX": 25, "scaleY": 2 },
-    { "x": 600, "y": 420, "scaleX": 20, "scaleY": 2 }
+    { "x": 500, "y": 380, "scaleX": 25, "scaleY": 2 }
   ],
   "walls": [
     { "x": 570, "y": 450, "scaleX": 2, "scaleY": 300 }
   ],
   "spikes": [
-    { "x": 200 , "y": 555, "scale": 0.25  },
+    { "x": 200 , "y": 565, "scale": 0.25  },
     { "x": 580, "y": 375, "scale": 0.25  },
     { "x": 596, "y": 375, "scale": 0.25  },
     { "x": 612, "y": 375, "scale": 0.25  },
@@ -27,8 +25,8 @@
   "doubleJumpItems": [{ "x": 400, "y": 300, "scale": 2 }],
   "goal": { "x": 750, "y": 350, "scale": 2 },
   "background": {
-    "tilemapKey": "mapa_laboratorio",
-    "tilesetNameInTiled": "background",
-    "tilesetImageKey": "meu_tileset"
+    "tilemapKey": "mapa_laboratorio2",
+    "tilesetNameInTiled": "BackgroundTiles",
+    "tilesetImageKey": "meu_tileset" 
   }
 }

@@ -38,24 +38,6 @@ export default class GameScene extends Phaser.Scene {
         const levelDataKey = `level${this.currentLevel}Data`;
         const levelData = this.cache.json.get(levelDataKey);
 
-        // --- CRIAÇÃO DO BACKGROUND (SE EXISTIR) ---
-        // Verifica se a informação do background existe no JSON do nível
-        if (levelData.background) {
-            const map = this.make.tilemap({ key: levelData.background.tilemapKey });
-
-            const tileset = map.addTilesetImage(
-                levelData.background.tilesetNameInTiled,
-                levelData.background.tilesetImageKey
-            );
-
-            // Assumindo que o nome da camada é sempre 'Camada de Blocos 1'
-            const backgroundLayer = map.createLayer('Camada de Blocos 1', tileset, 0, 0);
-
-            if (backgroundLayer) {
-                backgroundLayer.setDepth(-10);
-            }
-        }
-
         this.isGamePaused = true;
 
         this.scene.launch("UIScene", {
@@ -75,6 +57,7 @@ export default class GameScene extends Phaser.Scene {
             allowGravity: false,
             immovable: true,
         });
+        
         levelData.platforms.forEach((p) => {
             if (p.type === "moving") {
                 const newPlatform = new MovingPlatform(this, p.x, p.y, "movingPlatform", p);
@@ -203,6 +186,34 @@ export default class GameScene extends Phaser.Scene {
 
 
         // --- WORLD ---
+
+        if (levelData.background) {
+            const map = this.make.tilemap({ key: levelData.background.tilemapKey });
+
+            const tileset = map.addTilesetImage(
+                levelData.background.tilesetNameInTiled, 
+                levelData.background.tilesetImageKey
+            );
+
+            // 1. Cria a camada de fundo (APENAS VISUAL)
+            const backgroundLayer = map.createLayer('BackgroundLayer', tileset, 0, 0);
+            if (backgroundLayer) {
+                backgroundLayer.setDepth(-10);
+            }
+
+            // 2. Cria a camada de plataformas (COM COLISÃO)
+            const platformsLayer = map.createLayer('PlatformsLayer', tileset, 0, 0);
+
+            // 3. Ativa a colisão APENAS na camada de plataformas
+            if (platformsLayer) {
+            // O Phaser vai procurar a propriedade "collides: true" que você definiu no Tiled
+                platformsLayer.setCollisionByProperty({ collides: true });
+        
+            // Adiciona o collider entre o jogador e ESTA camada específica
+                this.physics.add.collider(this.player, platformsLayer);
+            }
+        }
+
         this.doors = this.physics.add.group();
         if (levelData.doors) {
             levelData.doors.forEach((d) => {

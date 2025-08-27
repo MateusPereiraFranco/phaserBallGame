@@ -5,11 +5,14 @@ export default class PreloaderScene extends Phaser.Scene {
 
     preload() {
         this.load.json('level1Data', 'assets/levels/level1.json');
+        this.load.tilemapTiledJSON('mapa_laboratorio', 'assets/images/background/json/backgroundPlatform.json');
         this.load.json('level2Data', 'assets/levels/level2.json');
+        this.load.tilemapTiledJSON('mapa_laboratorio2', 'assets/images/background/json/backgroundPlatform2.json');
         this.load.json('level3Data', 'assets/levels/level3.json');
         this.load.json('level4Data', 'assets/levels/level4.json');
         this.load.json('level5Data', 'assets/levels/level5.json');
         this.load.json('level6Data', 'assets/levels/level6.json');
+        this.load.tilemapTiledJSON('mapa_laboratorio3', 'assets/images/background/json/backgroundPlatform6.json');
         this.load.json('level7Data', 'assets/levels/level7.json');
         this.load.json('level8Data', 'assets/levels/level8.json');
         this.load.json('level9Data', 'assets/levels/level9.json');
@@ -18,6 +21,8 @@ export default class PreloaderScene extends Phaser.Scene {
         this.load.json('level12Data', 'assets/levels/level12.json');
         this.load.json('level13Data', 'assets/levels/level13.json');
         this.load.json('level14Data', 'assets/levels/level14.json');
+
+        this.load.image('meu_tileset', 'assets/images/background/tileset/level_tileset1.png');
 
         // --- CARREGANDO OS FRAMES INDIVIDUAIS DO ROBÔ ---
         // Assumimos que você renomeou e colocou os arquivos em 'assets/images/player/'
@@ -93,9 +98,6 @@ export default class PreloaderScene extends Phaser.Scene {
         this.load.image('fallingPlatform', 'assets/images/world/platform/fallingPlatform/fallingPlatform.png');
 
         //BACKGROUND -------------------------------------------
-
-        this.load.image('meu_tileset', 'assets/images/background/tileset/level_tileset.png');
-        this.load.tilemapTiledJSON('mapa_laboratorio', 'assets/images/background/json/background.json');
 
     }
 
@@ -253,6 +255,6 @@ export default class PreloaderScene extends Phaser.Scene {
             repeat: 0 // Toca só uma vez
         });
 
-        this.scene.start('GameScene', { level: 13 });
+        this.scene.start('GameScene', { level: 2 });
     }
 }
