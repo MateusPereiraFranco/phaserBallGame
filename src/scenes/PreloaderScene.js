@@ -303,6 +303,6 @@ export default class PreloaderScene extends Phaser.Scene {
         });
 
 
-        this.scene.start('GameScene', { level: 15 });
+        this.scene.start('GameScene', { level: 13 });
     }
 }
