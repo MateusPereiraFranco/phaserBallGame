@@ -7,9 +7,9 @@ export default class Fireball extends Phaser.Physics.Arcade.Sprite {
 
     // Método para "disparar" a bola de fogo a partir de uma posição
     fire(x, y, direction) {
-        this.body.reset(x, y); // Reposiciona a bola de fogo
-        this.setActive(true);
-        this.setVisible(true);
+        // O método enableBody reativa o sprite, a sua hitbox e o posiciona.
+        // É a forma correta de "reviver" um sprite que foi desativado com disableBody.
+        this.enableBody(true, x, y, true, true);
 
         // Define a velocidade com base na direção do jogador
         const speed = 400;
@@ -26,11 +26,10 @@ export default class Fireball extends Phaser.Physics.Arcade.Sprite {
 
     // Método de atualização, chamado a cada frame pela GameScene
     update() {
-        // Se a bola de fogo sair da tela, a desativamos para ser reutilizada
+        // Se a bola de fogo sair da tela, a desativamos para ser reutilizada.
         if (this.x < 0 || this.x > this.scene.cameras.main.width) {
-            this.setActive(false);
-            this.setVisible(false);
-            this.body.stop();
+            // Usamos disableBody aqui também para consistência.
+            this.disableBody(true, true);
         }
     }
 }

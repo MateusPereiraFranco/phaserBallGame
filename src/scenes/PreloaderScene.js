@@ -21,6 +21,7 @@ export default class PreloaderScene extends Phaser.Scene {
         this.load.json('level12Data', 'assets/levels/level12.json');
         this.load.json('level13Data', 'assets/levels/level13.json');
         this.load.json('level14Data', 'assets/levels/level14.json');
+        this.load.json('level15Data', 'assets/levels/level15.json');
 
         this.load.image('meu_tileset', 'assets/images/background/tileset/level_tileset1.png');
 
@@ -61,8 +62,6 @@ export default class PreloaderScene extends Phaser.Scene {
             this.load.image(`specialCoins_${i}`, `assets/images/colectibles/specialCoins/Gold_${i}.png`);
         }
 
-
-
         this.load.spritesheet('drone_walk_sheet', 'assets/images/enemies/drone/Walk.png', {
             frameWidth: 48, // IMPORTANTE: Ajuste se a largura de cada frame for diferente
             frameHeight: 48 // IMPORTANTE: Ajuste se a altura de cada frame for diferente
@@ -77,6 +76,22 @@ export default class PreloaderScene extends Phaser.Scene {
         this.load.spritesheet('drone_drop_sheet', 'assets/images/enemies/drone/Drop.png', {
             frameWidth: 48, // IMPORTANTE: Ajuste se a largura de cada frame for diferente
             frameHeight: 48 // IMPORTANTE: Ajuste se a altura de cada frame for diferente
+        });
+
+        this.load.spritesheet('spiderbot_idle_sheet', 'assets/images/enemies/spiderbot/spiderbot_idle_sheet2.png', {
+            frameWidth: 48, frameHeight: 74
+        });
+        this.load.spritesheet('spiderbot_walk_sheet', 'assets/images/enemies/spiderbot/spiderbot_walk_sheet.png', {
+            frameWidth: 96, frameHeight: 74
+        });
+        this.load.spritesheet('spiderbot_attack_sheet', 'assets/images/enemies/spiderbot/spiderbot_attack_sheet.png', {
+            frameWidth: 96, frameHeight: 74
+        });
+        this.load.spritesheet('spiderbot_takehit_sheet', 'assets/images/enemies/spiderbot/spiderbot_takehit_sheet2.png', {
+            frameWidth: 96, frameHeight: 74
+        });
+        this.load.spritesheet('spiderbot_death_sheet', 'assets/images/enemies/spiderbot/spiderbot_death_sheet2.png', {
+            frameWidth: 96, frameHeight: 74
         });
 
         this.load.image('bomb', 'assets/images/effects/bomb/bomb_1.png'); // Imagem estática da bomba caindo
@@ -255,6 +270,39 @@ export default class PreloaderScene extends Phaser.Scene {
             repeat: 0 // Toca só uma vez
         });
 
-        this.scene.start('GameScene', { level: 2 });
+        // Animação: Andando (Walk) - 12 frames
+        this.anims.create({
+            key: 'spiderbot-walk',
+            frames: this.anims.generateFrameNumbers('spiderbot_walk_sheet', { start: 0, end: 8 }),
+            frameRate: 12, // Mais rápido que o drone
+            repeat: -1
+        });
+
+        // Animação: Ataque (Attack) - 11 frames
+        this.anims.create({
+            key: 'spiderbot-attack',
+            frames: this.anims.generateFrameNumbers('spiderbot_attack_sheet', { start: 0, end: 8 }),
+            frameRate: 15,
+            repeat: -1 // Não repete
+        });
+
+        // Animação: Recebendo Dano (Take Hit) - 8 frames
+        this.anims.create({
+            key: 'spiderbot-takehit',
+            frames: this.anims.generateFrameNumbers('spiderbot_takehit_sheet', { start: 0, end: 6 }),
+            frameRate: 10,
+            repeat: 0 // Não repete
+        });
+
+        // Animação: Morte (Death) - 10 frames
+        this.anims.create({
+            key: 'spiderbot-death',
+            frames: this.anims.generateFrameNumbers('spiderbot_death_sheet', { start: 0, end: 7 }),
+            frameRate: 15,
+            repeat: 0 // Não repete
+        });
+
+
+        this.scene.start('GameScene', { level: 15 });
     }
 }

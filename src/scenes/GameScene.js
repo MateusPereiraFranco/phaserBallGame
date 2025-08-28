@@ -11,6 +11,7 @@ import SpecialCoin from "../prefabs/SpecialCoin.js";
 import Drone from "../prefabs/Drone.js";
 import Bomb from "../prefabs/Bomb.js";
 import Explosion from "../prefabs/Explosion.js";
+import Spiderbot from "../prefabs/Spiderbot.js";
 
 export default class GameScene extends Phaser.Scene {
     constructor() {
@@ -57,7 +58,7 @@ export default class GameScene extends Phaser.Scene {
             allowGravity: false,
             immovable: true,
         });
-        
+
         levelData.platforms.forEach((p) => {
             if (p.type === "moving") {
                 const newPlatform = new MovingPlatform(this, p.x, p.y, "movingPlatform", p);
@@ -191,7 +192,7 @@ export default class GameScene extends Phaser.Scene {
             const map = this.make.tilemap({ key: levelData.background.tilemapKey });
 
             const tileset = map.addTilesetImage(
-                levelData.background.tilesetNameInTiled, 
+                levelData.background.tilesetNameInTiled,
                 levelData.background.tilesetImageKey
             );
 
@@ -206,11 +207,17 @@ export default class GameScene extends Phaser.Scene {
 
             // 3. Ativa a colisão APENAS na camada de plataformas
             if (platformsLayer) {
-            // O Phaser vai procurar a propriedade "collides: true" que você definiu no Tiled
+                // O Phaser vai procurar a propriedade "collides: true" que você definiu no Tiled
                 platformsLayer.setCollisionByProperty({ collides: true });
-        
-            // Adiciona o collider entre o jogador e ESTA camada específica
-                this.physics.add.collider(this.player, platformsLayer);
+
+                // Adiciona o collider entre o jogador e ESTA camada específica
+                this.physics.add.collider(this.player, platformsLayer, (player) => {
+                    if (player.body.blocked.down) {
+                        if (player.platformStuckOn) {
+                            player.platformStuckOn = null;
+                        }
+                    }
+                });
             }
         }
 
@@ -285,6 +292,22 @@ export default class GameScene extends Phaser.Scene {
             null,
             this
         );
+
+        // --- BOSSGROUP ---
+        this.bossesGroup = this.physics.add.group({
+            allowGravity: false,
+            runChildUpdate: true, // ESSENCIAL para a IA do boss funcionar
+            immovable: true
+        });
+        // 1. DANO AO JOGADOR: O jogador perde uma vida ao tocar no boss
+        this.physics.add.collider(this.player, this.bossesGroup, this.loseLife, null, this);
+        // 2. DANO AO BOSS: O boss leva dano da fireball
+        this.physics.add.collider(this.fireballsGroup, this.bossesGroup, this.hitSpiderbot, null, this);
+        if (levelData.spiderbot) {
+            const botData = levelData.spiderbot;
+            const spiderbot = new Spiderbot(this, botData.x, botData.y, botData);
+            this.bossesGroup.add(spiderbot);
+        }
 
         this.physics.add.collider(this.player, this.walls);
         this.physics.add.collider(this.player, this.spikes, this.loseLife, null, this);
@@ -495,6 +518,13 @@ export default class GameScene extends Phaser.Scene {
         drone.takeHit();
     }
 
+    hitSpiderbot(fireball, spiderbot) {
+        // Este comando desativa o sprite E a sua hitbox, resolvendo o bug.
+        fireball.disableBody(true, true);
+
+        spiderbot.takeHit();
+    }
+
     collectDoubleJumpItem(player, item) {
         item.disableBody(true, true);
         player.addExtraJump();
@@ -515,12 +545,12 @@ export default class GameScene extends Phaser.Scene {
     }
 
     hitSwitch(fireball, switchInstance) {
-        fireball.setActive(false).setVisible(false);
+        fireball.disableBody(true, true);
         switchInstance.hit();
     }
 
     hitBarrel(fireball, barrel) {
-        fireball.setActive(false).setVisible(false);
+        fireball.disableBody(true, true);
         barrel.hit();
     }
 

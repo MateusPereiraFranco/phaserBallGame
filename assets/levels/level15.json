@@ -1,0 +1,28 @@
+{
+  "playerStart": { "x": 100, "y": 400 },
+  "platforms": [
+    { "x": 100, "y": 568, "scaleX": 1500, "scaleY": 2 }
+  ],
+  "fireballItems": [
+    { "x": 100, "y": 450, "scale": 2 }
+  ],
+  "spiderbot": {
+        "x": 400,
+        "y": 536,
+        "hp": 15,
+        "scale": 0.80,
+        "movement": {
+            "start": 400,
+            "end": 770,
+            "speed": 120 
+        }
+  },
+  "spikes": [
+  ],
+  "goal": { "x": 750, "y": 350, "scale": 2 },
+  "background": {
+    "tilemapKey": "mapa_laboratorio3",
+    "tilesetNameInTiled": "BackgroundTiles",
+    "tilesetImageKey": "meu_tileset"
+  }
+}
